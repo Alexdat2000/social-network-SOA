@@ -1,0 +1,114 @@
+specification {
+  element actor {
+    style {
+      shape person
+      color secondary
+    }
+  }
+  element system {
+    notation "Software System"
+    style {
+      opacity 20%
+    }
+  }
+  element application
+  element component {
+    style {
+      opacity 20%
+    }
+  }
+  element service
+  element webapp {
+    notation "Web Application"
+    style {
+      shape browser
+    }
+  }
+  element database {
+    notation "Database"
+    style {
+      shape storage
+    }
+  }
+}
+
+model {
+  user = actor 'User' {
+    description 'End user of the platform'
+    -> ui 'Use graphical interface'
+  }
+
+  ui = webapp 'UI' {
+    description 'Frontend in general'
+    icon tech:react
+    -> gateway 'Use REST API'
+  }
+
+  backend = system 'Backend' {
+    description 'Consists of microservices. This is the part we are working on'
+    icon tech:go
+
+    gateway = component 'Gateway' {
+      description 'Exposes backend to the outside'
+      icon tech:go
+
+      -> users 'Register new user'
+      -> users 'Login into account'
+      -> users 'Get or update profile information'
+      -> stats 'Sends events to collect stats'
+      -> stats 'Get profile or post stats'
+      -> content 'Get or post content'
+    }
+
+    users = component 'Users' {
+      description 'Responsible for user profiles'
+      icon tech:go
+
+      -> users_db 'Get or update profile data'
+    }
+
+    users_db = database 'Users Database' {
+      description 'Stores profile data'
+      icon tech:postgresql
+    }
+
+    stats = component 'Stats' {
+      description 'Accumulates and manages stats'
+      icon tech:go
+
+      -> stats_db 'Store and calculate stats'
+    }
+
+    stats_db = database 'Stats Databse' {
+      description 'Stores and processes stats'
+      icon https://gist.githubusercontent.com/Alexdat2000/e813846f7dcbb39b8ac33623c4df1af3/raw/d4da63548a581225578d9037c12e27bbdfac234e/clickhouse.svg
+    }
+
+    content = component 'Content' {
+      description 'Responsible for all user-generated content'
+      icon tech:go
+
+      -> content_db 'Store content'
+    }
+
+    content_db = database 'Content Database' {
+      description 'Stores user-generated content'
+      icon tech:postgresql
+    }
+  }
+}
+
+views {
+  view index {
+    title 'System Landscape'
+    include
+      *
+  }
+
+  view backend of backend {
+    title 'Backend'
+    description 'Microservice communications'
+    include
+      *
+  }
+}
