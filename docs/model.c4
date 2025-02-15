@@ -100,13 +100,14 @@ model {
 
 views {
   view index {
-    title 'System Landscape'
+    title '1 - System Landscape'
+    description 'Main scheme'
     include
       *
   }
 
   view backend of backend {
-    title 'Backend'
+    title '2 - Backend'
     description 'Microservice communications'
     include
       *
