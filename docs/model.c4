@@ -55,9 +55,11 @@ model {
       -> users 'Register new user'
       -> users 'Login into account'
       -> users 'Get or update profile information'
-      -> stats 'Sends events to collect stats'
+      -> stats_broker 'Send interaction events'
       -> stats 'Get profile or post stats'
-      -> content 'Get or post content'
+      -> content 'Get content'
+      -> content 'Post content'
+      -> content 'Delete content'
     }
 
     users = component 'Users' {
@@ -70,6 +72,13 @@ model {
     users_db = database 'Users Database' {
       description 'Stores profile data'
       icon tech:postgresql
+    }
+
+    stats_broker = component 'Stats Broker' {
+      description 'Message broker for stats events'
+      icon tech:rabbitMQ
+
+      -> stats 'Send interaction events'
     }
 
     stats = component 'Stats' {
