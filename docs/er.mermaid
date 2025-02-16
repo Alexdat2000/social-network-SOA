@@ -1,0 +1,28 @@
+erDiagram
+    User {
+        string username
+        string hashed_password
+        string email
+        string status
+        string profile_picture
+    }
+    User ||--o{ Post : makes
+
+    Post {
+        int post_id
+        string content
+        string author_username
+        timestamp created
+        timestamp last_edited
+    }
+    Post ||--o{ Comment : replies
+
+    Comment {
+        int comment_id
+        string content
+        string author_username
+        timestamp created
+        timestamp last_edited
+        int reply_to_post
+        int reply_to_comment
+    }

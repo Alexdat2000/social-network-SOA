@@ -76,7 +76,7 @@ model {
 
     stats_broker = component 'Stats Broker' {
       description 'Message broker for stats events'
-      icon tech:rabbitMQ
+      icon https://icon.icepanel.io/Technology/svg/RabbitMQ.svg
 
       -> stats 'Send interaction events'
     }
