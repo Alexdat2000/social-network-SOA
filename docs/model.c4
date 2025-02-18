@@ -88,7 +88,7 @@ model {
       -> stats_db 'Store and calculate stats'
     }
 
-    stats_db = database 'Stats Databse' {
+    stats_db = database 'Stats Database' {
       description 'Stores and processes stats'
       icon https://gist.githubusercontent.com/Alexdat2000/e813846f7dcbb39b8ac33623c4df1af3/raw/d4da63548a581225578d9037c12e27bbdfac234e/clickhouse.svg
     }
