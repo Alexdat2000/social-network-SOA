@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Social Network
+  description: |-
+    This is a homework project for Service-Oriented Architectures cource
+  version: 0.1.0
+tags:
+  - name: users
+    description: Responsible for user authentication, permissions and user profiles
+
+paths:
+  /users:
+    post:
+      summary: Create user
+      description: Make a new user with given credentials
+      tags:
+        - users
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid username, password or email supplied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incorrectField:
+                    type: string
+                    example: password
+                    enum:
+                      - username
+                      - email
+                      - password
+                  errorMessage:
+                    type: string
+                    example: Password should be at least 8 characters
+
+
+    patch:
+      summary: Update user info
+      description: Update field(s) in user profile
+      tags:
+        - users
+      parameters:
+        - name: jwt
+          in: query
+          description: JWT token for updated user
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Field names and new values
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfileField'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Unsuccessful operation, some field's value is invalid
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    incorrectField:
+                      type: string
+                      example: email
+                      enum:
+                        - dateOfBirth
+                        - email
+                        - phoneNumber
+        '401':
+          description: Unauthorized
+
+    get:
+      summary: Get user information
+      description: Get all fields for user
+      tags:
+        - users
+      parameters:
+        - name: username
+          in: query
+          description: Target user's username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileField'
+        '404':
+          description: User not found
+
+  /login:
+    get:
+      summary: Get token for user
+      description: Login into account with login and password, and get a token for that user
+      tags:
+        - users
+      parameters:
+        - name: username
+          in: query
+          description: Username
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: Password
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+        '401':
+          description: Incorrect password
+        '404':
+          description: User not found
+
+components:
+  schemas:
+    ProfileField:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          example: firstName
+          enum:
+            - username
+            - firstName
+            - lastName
+            - dateOfBirth
+            - email
+            - phoneNumber
+        fieldValue:
+          type: string
+          example: Alex
