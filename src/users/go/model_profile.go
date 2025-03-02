@@ -20,4 +20,8 @@ type Profile struct {
 	DateOfBirth string `json:"dateOfBirth,omitempty"`
 
 	PhoneNumber string `json:"phoneNumber,omitempty"`
+
+	CreatedAt int32 `json:"createdAt,omitempty"`
+
+	LastEditedAt int32 `json:"lastEditedAt,omitempty"`
 }

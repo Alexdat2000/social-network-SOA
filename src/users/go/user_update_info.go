@@ -1,6 +1,7 @@
 package swagger
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,11 +39,18 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var res sql.Result
+
 	if fieldName == "firstName" || fieldName == "lastName" {
 		if len(newValue) > 100 {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "\"Length must not exceed 100 characters\"")
 			return
+		}
+		if fieldName == "firstName" {
+			res, err = DB.Exec(`update users set first_name = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
+		} else {
+			res, err = DB.Exec(`update users set last_name = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
 		}
 	} else if fieldName == "email" {
 		email := r.URL.Query().Get("email")
@@ -52,6 +60,7 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "\"Invalid email address\"")
 			return
 		}
+		res, err = DB.Exec(`update users set email = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
 	} else if fieldName == "phone" {
 		newValue = strings.Replace(newValue, " ", "", -1)
 		newValue = strings.Replace(newValue, "(", "", -1)
@@ -71,6 +80,7 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "\"Invalid phone number\"")
 			return
 		}
+		res, err = DB.Exec(`update users set phone_number = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
 	} else if fieldName == "dateOfBirth" {
 		t, err := time.Parse("2006-1-2", newValue)
 		if err != nil {
@@ -79,23 +89,12 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		newValue = t.Format("2006-1-2")
+		res, err = DB.Exec(`update users set date_of_birth = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "\"Invalid field name\"")
 		return
 	}
-
-	fieldMap := make(map[string]string)
-	fieldMap["firstName"] = "first_name"
-	fieldMap["lastName"] = "last_name"
-	fieldMap["email"] = "email"
-	fieldMap["phone"] = "phone"
-	fieldMap["dateOfBirth"] = "date_of_birth"
-
-	req := fmt.Sprintf(`update users
-	set %s = '%s'
-	where username = '%s'`, fieldMap[fieldName], newValue, username)
-	res, err := DB.Exec(req)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -186,3 +186,9 @@ components:
         phoneNumber:
           type: string
           example: "18005550100"
+        createdAt:
+          type: integer
+          example: 1740945570
+        lastEditedAt:
+          type: integer
+          example: 1740945570

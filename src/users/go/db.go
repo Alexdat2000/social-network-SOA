@@ -57,7 +57,9 @@ func createTables() {
     first_name      VARCHAR(100),
     last_name       VARCHAR(100),
     date_of_birth   DATE,
-    phone_number    varchar(15)
+    phone_number    varchar(15),
+    created_at      TIMESTAMP,
+    last_edited_at  TIMESTAMP
 );
 `)
 	if err != nil {

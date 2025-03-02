@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 )
 
 func badRegisterRequest(w http.ResponseWriter, field string, reason string) {
@@ -83,19 +83,18 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Register:\nusername: %s\npassword: %s\nemail: %s\n", username, password, email)
-
 	passwordHash := sha256.New()
 	passwordHash.Write([]byte(password))
 	passwordHash.Write([]byte(username))
 
-	req := fmt.Sprintf(`insert into users (username, email, hashed_password)
-values ('%s', '%s', '%s')`, username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)))
-	_, err = DB.Query(req)
+	t := time.Now()
+	_, err = DB.Exec(`insert into users (username, email, hashed_password, created_at, last_edited_at)
+values ($1, $2, $3, $4, $5)`,
+		username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)), t, t)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Print(err.Error())
+		fmt.Fprint(w, "\"This username already exists\"")
 	} else {
 		token, err := CreateToken(username)
 		if err != nil {

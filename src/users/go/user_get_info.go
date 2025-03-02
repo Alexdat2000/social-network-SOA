@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 func UsersGet(w http.ResponseWriter, r *http.Request) {
@@ -16,20 +17,23 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := fmt.Sprintf(`select email, first_name, last_name, date_of_birth, phone_number from users where username='%s'`, user)
+	req := fmt.Sprintf(`select email, first_name, last_name, date_of_birth, phone_number, created_at, last_edited_at
+from users where username='%s'`, user)
 	row := DB.QueryRow(req)
 
 	nullableAnswer := struct {
-		Email       string
-		FirstName   sql.NullString
-		LastName    sql.NullString
-		DateOfBirth sql.NullString
-		PhoneNumber sql.NullString
+		Email        string
+		FirstName    sql.NullString
+		LastName     sql.NullString
+		DateOfBirth  sql.NullString
+		PhoneNumber  sql.NullString
+		CreatedAt    time.Time
+		LastEditedAt time.Time
 	}{}
 
 	err := row.Scan(&nullableAnswer.Email,
 		&nullableAnswer.FirstName, &nullableAnswer.LastName, &nullableAnswer.DateOfBirth,
-		&nullableAnswer.PhoneNumber)
+		&nullableAnswer.PhoneNumber, &nullableAnswer.CreatedAt, &nullableAnswer.LastEditedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -40,8 +44,10 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ans := Profile{
-		Username: user,
-		Email:    nullableAnswer.Email,
+		Username:     user,
+		Email:        nullableAnswer.Email,
+		CreatedAt:    int32(nullableAnswer.CreatedAt.Unix()),
+		LastEditedAt: int32(nullableAnswer.LastEditedAt.Unix()),
 	}
 	if nullableAnswer.FirstName.Valid {
 		ans.FirstName = nullableAnswer.FirstName.String
