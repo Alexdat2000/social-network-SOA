@@ -87,9 +87,10 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 	id := int(uuid.New().ID() / 2)
 	passwordHash := sha256.New()
 	passwordHash.Write([]byte(password))
+	passwordHash.Write([]byte(strconv.Itoa(id)))
+
 	req := fmt.Sprintf(`insert into users (id, username, email, hashed_password)
 values ('%d', '%s', '%s', '%s')`, id, username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)))
-	println(req)
 	_, err = DB.Query(req)
 
 	if err != nil {

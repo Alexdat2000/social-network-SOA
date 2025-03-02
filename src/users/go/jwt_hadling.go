@@ -47,7 +47,7 @@ func NewAuthHandlers(jwtprivateFile string, jwtPublicFile string) *AuthHandlers 
 
 func CreateToken(username string) (string, error) {
 	claims := jwt.MapClaims{
-		"username": username,
+		"userID": username,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	signedToken, err := token.SignedString(AH.jwtPrivate)
@@ -66,7 +66,7 @@ func ValidateToken(tokenString string) (string, error) {
 	if err != nil || !token.Valid {
 		return "", err
 	}
-	return claims["username"].(string), nil
+	return claims["userID"].(string), nil
 }
 
 func InitAuthHandler() {
