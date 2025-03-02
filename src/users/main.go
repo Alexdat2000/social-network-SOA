@@ -9,23 +9,16 @@
 package main
 
 import (
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-
-	// WARNING!
-	// Change this to a fully-qualified import path
-	// once you place this file into your project.
-	// For example,
-	//
-	//    sw "github.com/myname/myrepo/go"
-	//
 	sw "soa/users/go"
 )
 
 func main() {
+	sw.Init()
+
 	log.Printf("Server started")
-
 	router := sw.NewRouter()
-
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
