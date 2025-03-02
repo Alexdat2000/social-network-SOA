@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	sw.Init()
+	sw.InitDB()
 
 	log.Printf("Server started")
 	router := sw.NewRouter()

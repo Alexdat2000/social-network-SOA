@@ -22,20 +22,20 @@ func getDBConnectionString() string {
 
 var DB *sql.DB
 
-func Init() {
+func connectToDB() {
 	connStr := getDBConnectionString()
-	fmt.Printf("Connecting to PostgreSQL: %s\n", connStr)
 
 	maxRetries := 5
+	var err error
 	for i := 0; i < maxRetries; i++ {
-		db, err := sql.Open("postgres", connStr)
+		DB, err = sql.Open("postgres", connStr)
 		if err != nil {
 			log.Printf("Failed to open DB connection: %v", err)
 			time.Sleep(time.Second * 3)
 			continue
 		}
 
-		err = db.Ping()
+		err = DB.Ping()
 		if err == nil {
 			break
 		}
@@ -43,5 +43,32 @@ func Init() {
 		log.Printf("Failed to ping DB (attempt %d/%d): %v", i+1, maxRetries, err)
 		time.Sleep(time.Second * 3)
 	}
+	if err != nil {
+		log.Fatalf("Failed to connect to the database after %d attempts: %v", maxRetries, err)
+	}
+}
+
+func createTables() {
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS users
+(
+    id              SERIAL PRIMARY KEY,
+    username        VARCHAR(100) UNIQUE NOT NULL,
+    email           VARCHAR(100) NOT NULL,
+    hashed_password VARCHAR(64)  NOT NULL,
+    first_name      VARCHAR(100),
+    last_name       VARCHAR(100),
+    date_of_birth   DATE,
+    phone_number    varchar(15)
+);
+`)
+	if err != nil {
+		log.Fatalf("Failed to create table: %v", err)
+	}
+}
+
+func InitDB() {
+	connectToDB()
 	log.Println("Successfully connected to the database!")
+	createTables()
+	log.Println("Successfully set up tables!")
 }
