@@ -2,18 +2,16 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"time"
 )
 
-var sourcePort = 8080
-var destPort = 8081
+var dest *string
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	targetURL := fmt.Sprintf("localhost:%d", destPort)
+	targetURL := *dest
 
 	if r.URL.RawQuery != "" {
 		targetURL += "?" + r.URL.RawQuery
@@ -55,10 +53,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	sourcePort = *flag.Int("from", 8080, "from port")
-	destPort = *flag.Int("to", 8081, "to port")
+	listen := flag.String("listen", "localhost:8080", "listen for address")
+	dest = flag.String("to", "localhost:8081", "redirect to this address")
 	flag.Parse()
 
+	log.Printf("Listening on %s", *listen)
+	log.Printf("Redirecting to %s", *dest)
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", sourcePort), nil))
+	log.Fatal(http.ListenAndServe(*listen, nil))
 }
