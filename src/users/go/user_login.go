@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func LoginGet(w http.ResponseWriter, r *http.Request) {
@@ -24,13 +23,16 @@ func LoginGet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if len(username) > 32 || len(password) > 32 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	req := fmt.Sprintf(`select id, hashed_password from users where username='%s'`, username)
+	req := fmt.Sprintf(`select hashed_password from users where username='%s'`, username)
 	row := DB.QueryRow(req)
-	var id int
 	var hashedPassword string
 
-	err := row.Scan(&id, &hashedPassword)
+	err := row.Scan(&hashedPassword)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -42,13 +44,13 @@ func LoginGet(w http.ResponseWriter, r *http.Request) {
 
 	passwordHash := sha256.New()
 	passwordHash.Write([]byte(password))
-	passwordHash.Write([]byte(strconv.Itoa(id)))
+	passwordHash.Write([]byte(username))
 	if base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)) != hashedPassword {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	token, err := CreateToken(strconv.Itoa(id))
+	token, err := CreateToken(username)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

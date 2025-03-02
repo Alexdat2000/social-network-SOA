@@ -16,12 +16,10 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := fmt.Sprintf(`select id, username, email, first_name, last_name, date_of_birth, phone_number from users where username='%s'`, user)
+	req := fmt.Sprintf(`select email, first_name, last_name, date_of_birth, phone_number from users where username='%s'`, user)
 	row := DB.QueryRow(req)
 
 	nullableAnswer := struct {
-		Id          int32
-		Username    string
 		Email       string
 		FirstName   sql.NullString
 		LastName    sql.NullString
@@ -29,7 +27,7 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber sql.NullString
 	}{}
 
-	err := row.Scan(&nullableAnswer.Id, &nullableAnswer.Username, &nullableAnswer.Email,
+	err := row.Scan(&nullableAnswer.Email,
 		&nullableAnswer.FirstName, &nullableAnswer.LastName, &nullableAnswer.DateOfBirth,
 		&nullableAnswer.PhoneNumber)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -42,11 +40,8 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ans := Profile{
-		Id:       nullableAnswer.Id,
-		Username: nullableAnswer.Username,
-		Email:    nullableAnswer.Email,
+		Email: nullableAnswer.Email,
 	}
-
 	if nullableAnswer.FirstName.Valid {
 		ans.FirstName = nullableAnswer.FirstName.String
 	}

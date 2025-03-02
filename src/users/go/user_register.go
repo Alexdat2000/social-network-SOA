@@ -5,11 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"net/mail"
-	"strconv"
 	"strings"
 )
 
@@ -67,6 +65,9 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 		badRegisterRequest(w, "username", "Field username is required")
 		return
 	}
+	if len(username) < 3 || len(username) > 32 {
+		badRegisterRequest(w, "username", "Username must be between 3 and 32 characters")
+	}
 	password := r.URL.Query().Get("password")
 	if password == "" {
 		badRegisterRequest(w, "password", "Field password is required")
@@ -84,20 +85,19 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Register:\nusername: %s\npassword: %s\nemail: %s\n", username, password, email)
 
-	id := int(uuid.New().ID() / 2)
 	passwordHash := sha256.New()
 	passwordHash.Write([]byte(password))
-	passwordHash.Write([]byte(strconv.Itoa(id)))
+	passwordHash.Write([]byte(username))
 
-	req := fmt.Sprintf(`insert into users (id, username, email, hashed_password)
-values ('%d', '%s', '%s', '%s')`, id, username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)))
+	req := fmt.Sprintf(`insert into users (username, email, hashed_password)
+values ('%s', '%s', '%s')`, username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)))
 	_, err = DB.Query(req)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err.Error())
 	} else {
-		token, err := CreateToken(strconv.Itoa(id))
+		token, err := CreateToken(username)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
