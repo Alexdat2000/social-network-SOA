@@ -95,7 +95,7 @@ values ('%s', '%s', '%s')`, username, email, base64.URLEncoding.EncodeToString(p
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, err.Error())
+		log.Print(err.Error())
 	} else {
 		token, err := CreateToken(username)
 		if err != nil {

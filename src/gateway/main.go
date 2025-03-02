@@ -1,55 +1,64 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 var dest *string
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	targetURL := *dest
-
-	if r.URL.RawQuery != "" {
-		targetURL += "?" + r.URL.RawQuery
-	}
-
-	proxyReq, err := http.NewRequest(r.Method, targetURL, r.Body)
+func proxyHandler(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Failed to create proxy request", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Print(err)
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	targetURL := strings.TrimSuffix(*dest, "/") + r.URL.String()
+	proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Print(err)
 		return
 	}
 
-	for name, values := range r.Header {
+	for key, values := range r.Header {
 		for _, value := range values {
-			proxyReq.Header.Add(name, value)
+			proxyReq.Header.Add(key, value)
 		}
 	}
 
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
-	resp, err := client.Do(proxyReq)
+	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
-		http.Error(w, "Failed to forward request", http.StatusBadGateway)
+		http.Error(w, fmt.Sprintf("Error sending proxy request: %v", err), http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
+	defer proxyResp.Body.Close()
 
-	for name, values := range resp.Header {
+	respBodyBytes, err := io.ReadAll(proxyResp.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error reading proxy response: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	for key, values := range proxyResp.Header {
 		for _, value := range values {
-			w.Header().Add(name, value)
+			w.Header().Add(key, value)
 		}
 	}
-
-	w.WriteHeader(resp.StatusCode)
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read answer", http.StatusInternalServerError)
-	}
+	w.WriteHeader(proxyResp.StatusCode)
+	w.Write(respBodyBytes)
 }
 
 func main() {
@@ -59,6 +68,6 @@ func main() {
 
 	log.Printf("Listening on %s", *listen)
 	log.Printf("Redirecting to %s", *dest)
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", proxyHandler)
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }

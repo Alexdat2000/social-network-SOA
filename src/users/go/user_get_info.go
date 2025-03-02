@@ -40,19 +40,20 @@ func UsersGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ans := Profile{
-		Email: nullableAnswer.Email,
+		Username: user,
+		Email:    nullableAnswer.Email,
 	}
 	if nullableAnswer.FirstName.Valid {
 		ans.FirstName = nullableAnswer.FirstName.String
 	}
 	if nullableAnswer.LastName.Valid {
-		ans.FirstName = nullableAnswer.LastName.String
+		ans.LastName = nullableAnswer.LastName.String
 	}
 	if nullableAnswer.DateOfBirth.Valid {
-		ans.FirstName = nullableAnswer.DateOfBirth.String
+		ans.DateOfBirth = nullableAnswer.DateOfBirth.String
 	}
 	if nullableAnswer.PhoneNumber.Valid {
-		ans.FirstName = nullableAnswer.PhoneNumber.String
+		ans.PhoneNumber = nullableAnswer.PhoneNumber.String
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")

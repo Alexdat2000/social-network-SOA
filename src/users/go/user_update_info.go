@@ -2,6 +2,7 @@ package swagger
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -14,33 +15,33 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 	jwt := r.URL.Query().Get("jwt")
 	if jwt == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Parameter jwt is required")
+		fmt.Fprint(w, "\"Parameter jwt is required\"")
 		return
 	}
 	fieldName := r.URL.Query().Get("fieldName")
 	if fieldName == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Parameter fieldName is required")
+		fmt.Fprint(w, "\"Parameter fieldName is required\"")
 		return
 	}
 	newValue := r.URL.Query().Get("newValue")
 	if newValue == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Parameter newValue is required")
+		fmt.Fprint(w, "\"Parameter newValue is required\"")
 		return
 	}
 
 	username, err := ValidateToken(jwt)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid token")
+		fmt.Fprint(w, "\"Invalid token\"")
 		return
 	}
 
 	if fieldName == "firstName" || fieldName == "lastName" {
 		if len(newValue) > 100 {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Length must not exceed 100 characters")
+			fmt.Fprint(w, "\"Length must not exceed 100 characters\"")
 			return
 		}
 	} else if fieldName == "email" {
@@ -48,7 +49,7 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 		_, err := mail.ParseAddress(email)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Invalid email address")
+			fmt.Fprint(w, "\"Invalid email address\"")
 			return
 		}
 	} else if fieldName == "phone" {
@@ -67,22 +68,43 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(newValue) > 13 || !ok {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Invalid phone number")
+			fmt.Fprint(w, "\"Invalid phone number\"")
 			return
 		}
 	} else if fieldName == "dateOfBirth" {
-		t, err := time.Parse("1/2/2006", "5/11/2023")
+		t, err := time.Parse("2006-1-2", newValue)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Date of birth must be in format DD.MM.YYYY")
+			fmt.Fprint(w, "\"Date of birth must be in format YYYY-MM-DD\"")
 			return
 		}
-		newValue = t.Format("01/02/2006")
+		newValue = t.Format("2006-1-2")
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid field name")
+		fmt.Fprint(w, "\"Invalid field name\"")
 		return
 	}
 
-	println(username)
+	fieldMap := make(map[string]string)
+	fieldMap["firstName"] = "first_name"
+	fieldMap["lastName"] = "last_name"
+	fieldMap["email"] = "email"
+	fieldMap["phone"] = "phone"
+	fieldMap["dateOfBirth"] = "date_of_birth"
+
+	req := fmt.Sprintf(`update users
+	set %s = '%s'
+	where username = '%s'`, fieldMap[fieldName], newValue, username)
+	res, err := DB.Exec(req)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Print(err)
+		return
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -2,7 +2,7 @@ services:
     gateway:
         build:
             context: src/gateway
-        command: ["--listen", ":8080", "--to", ":8081"]
+        command: ["--listen", ":8080", "--to", "http://users:8080"]
         ports:
             - "8080:8080"
         networks:
@@ -25,8 +25,6 @@ services:
             DB_SSL_MODE: disable
             PRIVATE_KEY: /tmp/private.pem
             PUBLIC_KEY: /tmp/public.pem
-        ports:
-            - "8081:8080"
         depends_on:
             postgres_users:
                 condition: service_healthy
@@ -44,8 +42,6 @@ services:
             POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
             POSTGRES_DB: ${DB_NAME:-users}
             PGDATA: /var/lib/postgresql/data/pgdata
-        ports:
-            - "5432:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
