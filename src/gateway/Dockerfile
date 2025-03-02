@@ -4,6 +4,6 @@ WORKDIR /src/gateway
 COPY go.* .
 RUN go mod download
 COPY * .
-RUN go build -o gateway
+RUN go build .
 
 ENTRYPOINT ["./gateway"]
