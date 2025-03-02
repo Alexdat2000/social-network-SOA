@@ -17,7 +17,7 @@ import (
 
 func main() {
 	sw.InitDB()
-
+	sw.InitAuthHandler()
 	log.Printf("Server started")
 	router := sw.NewRouter()
 	log.Fatal(http.ListenAndServe(":8080", router))

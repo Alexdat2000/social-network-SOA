@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"strconv"
 	"strings"
 )
 
@@ -95,6 +96,12 @@ values ('%d', '%s', '%s', '%s')`, id, username, email, base64.URLEncoding.Encode
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err.Error())
 	} else {
+		token, err := CreateToken(strconv.Itoa(id))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "\"%s\"", token)
 	}
 }
