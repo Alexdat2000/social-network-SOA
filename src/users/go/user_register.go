@@ -1,4 +1,4 @@
-package swagger
+package api
 
 import (
 	"crypto/sha256"
@@ -72,6 +72,7 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 	passwordStrength, errMsg := CheckPasswordStrength(password)
 	if !passwordStrength {
 		badRegisterRequest(w, "password", errMsg)
+		return
 	}
 	email := r.URL.Query().Get("email")
 	_, err := mail.ParseAddress(email)

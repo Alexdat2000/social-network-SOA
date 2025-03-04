@@ -11,10 +11,11 @@ services:
     users:
         build:
             context: src/users
+            target: runtime
         volumes:
             - ./credentials/private.pem:/tmp/private.pem
             - ./credentials/public.pem:/tmp/public.pem
-        command: ["--port", "8080"]
+        command: ["./api", "--port", "8080"]
         restart: always
         environment:
             DB_HOST: postgres_users

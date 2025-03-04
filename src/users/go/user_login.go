@@ -1,4 +1,4 @@
-package swagger
+package api
 
 import (
 	"crypto/sha256"
