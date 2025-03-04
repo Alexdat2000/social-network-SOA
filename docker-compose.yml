@@ -54,6 +54,17 @@ services:
         networks:
             - backend
 
+    users_tests:
+        build:
+            context: src/users
+            target: test
+        volumes:
+            - ./credentials/private.pem:/tmp/private.pem
+            - ./credentials/public.pem:/tmp/public.pem
+        environment:
+            PRIVATE_KEY: /tmp/private.pem
+            PUBLIC_KEY: /tmp/public.pem
+
 volumes:
     pgdata:
         driver: local

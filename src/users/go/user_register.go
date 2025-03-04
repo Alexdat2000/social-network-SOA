@@ -20,13 +20,12 @@ func badRegisterRequest(w http.ResponseWriter, field string, reason string) {
 
 const specialCharacters = "!@#$%^&*()'\""
 
-func checkPasswordStrength(w http.ResponseWriter, password string) bool {
+func CheckPasswordStrength(password string) (bool, string) {
 	if len(password) < 8 {
-		badRegisterRequest(w, "Password must be at least 8 characters", password)
-		return false
+		return false, "Password must be at least 8 characters"
 	}
 	if len(password) > 32 {
-		badRegisterRequest(w, "Password must be no more than 32 characters", password)
+		return false, "Password must be less than 32 characters"
 	}
 	has_digit := false
 	has_upper := false
@@ -43,18 +42,15 @@ func checkPasswordStrength(w http.ResponseWriter, password string) bool {
 		}
 	}
 	if !has_digit {
-		badRegisterRequest(w, "Password must contain at least 1 digit", password)
-		return false
+		return false, "Password must contain at least 1 digit"
 	}
 	if !has_upper {
-		badRegisterRequest(w, "Password must contain at least 1 uppercase letter", password)
-		return false
+		return false, "Password must contain at least 1 uppercase letter"
 	}
 	if !has_special {
-		badRegisterRequest(w, "Password must contain at least 1 special character", password)
-		return false
+		return false, "Password must contain at least 1 special character"
 	}
-	return true
+	return true, ""
 }
 
 func UsersPost(w http.ResponseWriter, r *http.Request) {
@@ -73,8 +69,9 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 		badRegisterRequest(w, "password", "Field password is required")
 		return
 	}
-	if !checkPasswordStrength(w, password) {
-		return
+	passwordStrength, errMsg := CheckPasswordStrength(password)
+	if !passwordStrength {
+		badRegisterRequest(w, "password", errMsg)
 	}
 	email := r.URL.Query().Get("email")
 	_, err := mail.ParseAddress(email)
