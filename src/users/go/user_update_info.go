@@ -10,6 +10,23 @@ import (
 	"time"
 )
 
+func SanitizePhone(phone string) (bool, string) {
+	phone = strings.Replace(phone, " ", "", -1)
+	phone = strings.Replace(phone, "(", "", -1)
+	phone = strings.Replace(phone, ")", "", -1)
+	phone = strings.Replace(phone, "-", "", -1)
+	phone = strings.Replace(phone, "+", "", -1)
+
+	ok := true
+	for c := range phone {
+		if !('0' <= phone[c] && phone[c] <= '9') {
+			ok = false
+			break
+		}
+	}
+	return ok && len(phone) <= 13, phone
+}
+
 func UsersPatch(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -62,20 +79,8 @@ func UsersPatch(w http.ResponseWriter, r *http.Request) {
 		}
 		res, err = DB.Exec(`update users set email = $1, last_edited_at=$2 where username = $3`, newValue, time.Now(), username)
 	} else if fieldName == "phone" {
-		newValue = strings.Replace(newValue, " ", "", -1)
-		newValue = strings.Replace(newValue, "(", "", -1)
-		newValue = strings.Replace(newValue, ")", "", -1)
-		newValue = strings.Replace(newValue, "-", "", -1)
-		newValue = strings.Replace(newValue, "+", "", -1)
-
-		ok := true
-		for c := range newValue {
-			if !('0' <= newValue[c] && newValue[c] <= '9') {
-				ok = false
-				break
-			}
-		}
-		if len(newValue) > 13 || !ok {
+		ok, newValue := SanitizePhone(newValue)
+		if !ok {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "\"Invalid phone number\"")
 			return

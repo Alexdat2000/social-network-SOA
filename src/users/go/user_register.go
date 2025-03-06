@@ -53,6 +53,14 @@ func CheckPasswordStrength(password string) (bool, string) {
 	return true, ""
 }
 
+func HashPassword(username, password string) string {
+	passwordHash := sha256.New()
+	passwordHash.Write([]byte(password))
+	passwordHash.Write([]byte{0})
+	passwordHash.Write([]byte(username))
+	return base64.URLEncoding.EncodeToString(passwordHash.Sum(nil))
+}
+
 func UsersPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -81,14 +89,10 @@ func UsersPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	passwordHash := sha256.New()
-	passwordHash.Write([]byte(password))
-	passwordHash.Write([]byte(username))
-
 	t := time.Now()
 	_, err = DB.Exec(`insert into users (username, email, hashed_password, created_at, last_edited_at)
 values ($1, $2, $3, $4, $5)`,
-		username, email, base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)), t, t)
+		username, email, HashPassword(username, password), t, t)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

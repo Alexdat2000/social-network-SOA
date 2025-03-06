@@ -1,9 +1,7 @@
 package api
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -42,10 +40,7 @@ func LoginGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	passwordHash := sha256.New()
-	passwordHash.Write([]byte(password))
-	passwordHash.Write([]byte(username))
-	if base64.URLEncoding.EncodeToString(passwordHash.Sum(nil)) != hashedPassword {
+	if HashPassword(username, password) != hashedPassword {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

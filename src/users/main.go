@@ -12,13 +12,13 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	sw "soa/users/go"
+	api "soa/users/go"
 )
 
 func main() {
-	sw.InitDB()
-	sw.InitAuthHandler()
+	api.InitDB()
+	api.InitAuthHandler()
 	log.Printf("Server started")
-	router := sw.NewRouter()
+	router := api.NewRouter()
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
