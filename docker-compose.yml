@@ -1,0 +1,75 @@
+services:
+    gateway:
+        build:
+            context: src/gateway
+        command: ["--listen", ":8080", "--to", "http://users:8080"]
+        ports:
+            - "8080:8080"
+        networks:
+            - backend
+
+    users:
+        build:
+            context: src/users
+            target: runtime
+        volumes:
+            - ./credentials/private.pem:/tmp/private.pem
+            - ./credentials/public.pem:/tmp/public.pem
+        command: ["./api", "--port", "8080"]
+        restart: always
+        environment:
+            DB_HOST: postgres_users
+            DB_PORT: 5432
+            DB_USER: ${DB_USER:-postgres}
+            DB_PASSWORD: ${DB_PASSWORD:-postgres}
+            DB_NAME: ${DB_NAME:-users}
+            DB_SSL_MODE: disable
+            PRIVATE_KEY: /tmp/private.pem
+            PUBLIC_KEY: /tmp/public.pem
+        depends_on:
+            postgres_users:
+                condition: service_healthy
+            gateway:
+                condition: service_started
+        networks:
+            - backend
+
+    postgres_users:
+        image: postgres:15-alpine
+        container_name: postgres_users
+        restart: always
+        environment:
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+            POSTGRES_DB: ${DB_NAME:-users}
+            PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - "5432:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U postgres -d users" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        networks:
+            - backend
+
+    users_tests:
+        build:
+            context: src/users
+            target: test
+        volumes:
+            - ./credentials/private.pem:/tmp/private.pem
+            - ./credentials/public.pem:/tmp/public.pem
+        environment:
+            PRIVATE_KEY: /tmp/private.pem
+            PUBLIC_KEY: /tmp/public.pem
+
+volumes:
+    pgdata:
+        driver: local
+
+networks:
+    backend:
+        driver: bridge
