@@ -22,6 +22,7 @@ const (
 	Content_Get_FullMethodName      = "/content_grpc.Content/Get"
 	Content_Post_FullMethodName     = "/content_grpc.Content/Post"
 	Content_Put_FullMethodName      = "/content_grpc.Content/Put"
+	Content_Delete_FullMethodName   = "/content_grpc.Content/Delete"
 	Content_GetPosts_FullMethodName = "/content_grpc.Content/GetPosts"
 )
 
@@ -29,9 +30,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ContentClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*PostInfo, error)
+	Get(ctx context.Context, in *UserPostRequest, opts ...grpc.CallOption) (*PostInfo, error)
 	Post(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostInfo, error)
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PostInfo, error)
+	Delete(ctx context.Context, in *UserPostRequest, opts ...grpc.CallOption) (*DeleteResult, error)
 	GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*PostsInfo, error)
 }
 
@@ -43,7 +45,7 @@ func NewContentClient(cc grpc.ClientConnInterface) ContentClient {
 	return &contentClient{cc}
 }
 
-func (c *contentClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*PostInfo, error) {
+func (c *contentClient) Get(ctx context.Context, in *UserPostRequest, opts ...grpc.CallOption) (*PostInfo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostInfo)
 	err := c.cc.Invoke(ctx, Content_Get_FullMethodName, in, out, cOpts...)
@@ -73,6 +75,16 @@ func (c *contentClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *contentClient) Delete(ctx context.Context, in *UserPostRequest, opts ...grpc.CallOption) (*DeleteResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteResult)
+	err := c.cc.Invoke(ctx, Content_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *contentClient) GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*PostsInfo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostsInfo)
@@ -87,9 +99,10 @@ func (c *contentClient) GetPosts(ctx context.Context, in *GetPostsRequest, opts 
 // All implementations must embed UnimplementedContentServer
 // for forward compatibility.
 type ContentServer interface {
-	Get(context.Context, *GetRequest) (*PostInfo, error)
+	Get(context.Context, *UserPostRequest) (*PostInfo, error)
 	Post(context.Context, *PostRequest) (*PostInfo, error)
 	Put(context.Context, *PutRequest) (*PostInfo, error)
+	Delete(context.Context, *UserPostRequest) (*DeleteResult, error)
 	GetPosts(context.Context, *GetPostsRequest) (*PostsInfo, error)
 	mustEmbedUnimplementedContentServer()
 }
@@ -101,7 +114,7 @@ type ContentServer interface {
 // pointer dereference when methods are called.
 type UnimplementedContentServer struct{}
 
-func (UnimplementedContentServer) Get(context.Context, *GetRequest) (*PostInfo, error) {
+func (UnimplementedContentServer) Get(context.Context, *UserPostRequest) (*PostInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedContentServer) Post(context.Context, *PostRequest) (*PostInfo, error) {
@@ -109,6 +122,9 @@ func (UnimplementedContentServer) Post(context.Context, *PostRequest) (*PostInfo
 }
 func (UnimplementedContentServer) Put(context.Context, *PutRequest) (*PostInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
+}
+func (UnimplementedContentServer) Delete(context.Context, *UserPostRequest) (*DeleteResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedContentServer) GetPosts(context.Context, *GetPostsRequest) (*PostsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
@@ -135,7 +151,7 @@ func RegisterContentServer(s grpc.ServiceRegistrar, srv ContentServer) {
 }
 
 func _Content_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+	in := new(UserPostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -147,7 +163,7 @@ func _Content_Get_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: Content_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentServer).Get(ctx, req.(*GetRequest))
+		return srv.(ContentServer).Get(ctx, req.(*UserPostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,6 +204,24 @@ func _Content_Put_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Content_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).Delete(ctx, req.(*UserPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Content_GetPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPostsRequest)
 	if err := dec(in); err != nil {
@@ -224,6 +258,10 @@ var Content_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Put",
 			Handler:    _Content_Put_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Content_Delete_Handler,
 		},
 		{
 			MethodName: "GetPosts",

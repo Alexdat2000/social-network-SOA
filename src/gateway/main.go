@@ -67,12 +67,14 @@ func main() {
 	cont := flag.String("content", "localhost:8082", "content server at this address")
 	flag.Parse()
 
+	content.InitGrpc(*cont)
+
 	log.Printf("Listening on %s", *listen)
 	log.Printf("User server at %s", *users)
 	log.Printf("Content server at %s", *cont)
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) { proxyHandler(w, r, *users) })
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) { proxyHandler(w, r, *users) })
 	http.HandleFunc("/entry", func(w http.ResponseWriter, r *http.Request) { content.HandleEntry(w, r, *users, *cont) })
-	http.HandleFunc("/all-entries", func(w http.ResponseWriter, r *http.Request) { content.HandleAllEntries(w, r, *users, *cont) })
+	http.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) { content.HandleList(w, r, *users, *cont) })
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }

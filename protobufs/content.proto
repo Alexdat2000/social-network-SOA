@@ -7,13 +7,14 @@ option go_package = "soa/content_grpc";
 package content_grpc;
 
 service Content {
-  rpc Get(GetRequest) returns (PostInfo) {}
+  rpc Get(UserPostRequest) returns (PostInfo) {}
   rpc Post(PostRequest) returns (PostInfo) {}
   rpc Put(PutRequest) returns (PostInfo) {}
+  rpc Delete(UserPostRequest) returns (DeleteResult) {}
   rpc GetPosts(GetPostsRequest) returns (PostsInfo) {}
 }
 
-message GetRequest {
+message UserPostRequest {
   string user = 1;
   uint32 post_id = 2;
 }
@@ -44,6 +45,10 @@ message PostInfo {
   google.protobuf.Timestamp last_edited_at = 6;
   bool is_private = 7;
   repeated string tags = 8;
+}
+
+message DeleteResult {
+  bool successful = 1;
 }
 
 message GetPostsRequest {

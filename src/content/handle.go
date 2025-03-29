@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func (s *server) Get(_ context.Context, req *pb.GetRequest) (*pb.PostInfo, error) {
+func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, error) {
 	re := fmt.Sprintf(`select * from entries where id='%d'`, req.GetPostId())
 	row := api.DB.QueryRow(re)
 
@@ -47,7 +47,7 @@ values ($1, $2, $3, $4, $5, $6, $7, $8)`,
 	if err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, &pb.GetRequest{
+	return s.Get(ctx, &pb.UserPostRequest{
 		User:   req.GetUser(),
 		PostId: idInt,
 	})
@@ -77,10 +77,28 @@ where id = $1 and author = $2`,
 	if rows == 0 {
 		return nil, errors.New("not found")
 	}
-	return s.Get(ctx, &pb.GetRequest{
+	return s.Get(ctx, &pb.UserPostRequest{
 		User:   req.GetUser(),
 		PostId: req.GetPostId(),
 	})
+}
+
+func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteResult, error) {
+	res, err := api.DB.Exec(`delete from entries where id = $1 and author = $2`, req.GetPostId(), req.GetUser())
+	if err != nil {
+		log.Printf("Error when deleting entry: %v", err)
+		return nil, err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Error when deleting entry: %v", err)
+		return nil, err
+	}
+	if count == 0 {
+		return &pb.DeleteResult{Successful: false}, nil
+	} else {
+		return &pb.DeleteResult{Successful: true}, nil
+	}
 }
 
 func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.PostsInfo, error) {
