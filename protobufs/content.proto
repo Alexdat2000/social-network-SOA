@@ -10,6 +10,7 @@ service Content {
   rpc Get(GetRequest) returns (PostInfo) {}
   rpc Post(PostRequest) returns (PostInfo) {}
   rpc Put(PutRequest) returns (PostInfo) {}
+  rpc GetPosts(GetPostsRequest) returns (PostsInfo) {}
 }
 
 message GetRequest {
@@ -43,4 +44,14 @@ message PostInfo {
   google.protobuf.Timestamp last_edited_at = 6;
   bool is_private = 7;
   repeated string tags = 8;
+}
+
+message GetPostsRequest {
+  uint32 page = 1;
+}
+
+message PostsInfo {
+  uint32 page = 1;
+  uint32 total_pages = 2;
+  repeated uint32 postIds = 3 [packed=true];
 }

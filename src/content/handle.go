@@ -21,13 +21,13 @@ func (s *server) Get(_ context.Context, req *pb.GetRequest) (*pb.PostInfo, error
 	var tags string
 	err := row.Scan(&ans.PostId, &ans.Title, &ans.Description, &ans.Author, &ans.CreatedAt, &ans.LastEditedAt, &ans.IsPrivate, &tags)
 	if errors.Is(err, sql.ErrNoRows) {
-		return &pb.PostInfo{}, err
+		return nil, err
 	} else if err != nil {
 		log.Printf("Error when reading row: %v", err)
-		return &pb.PostInfo{}, err
+		return nil, err
 	}
 	if ans.GetAuthor() != req.GetUser() && ans.IsPrivate {
-		return &pb.PostInfo{}, errors.New("no access")
+		return nil, errors.New("no access")
 	}
 	ans.Tags = strings.Split(tags, ",")
 	return &ans, nil
@@ -37,7 +37,7 @@ func (s *server) Post(ctx context.Context, req *pb.PostRequest) (*pb.PostInfo, e
 	id, err := uuid.NewUUID()
 	if err != nil {
 		log.Printf("Error when generating uuid: %v", err)
-		return &pb.PostInfo{}, err
+		return nil, err
 	}
 	idInt := id.ID() / 2
 	t := time.Now()
@@ -45,7 +45,7 @@ func (s *server) Post(ctx context.Context, req *pb.PostRequest) (*pb.PostInfo, e
 values ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		idInt, req.GetTitle(), req.GetDescription(), req.GetUser(), t, t, req.GetIsPrivate(), strings.Join(req.GetTags(), ","))
 	if err != nil {
-		return &pb.PostInfo{}, err
+		return nil, err
 	}
 	return s.Get(ctx, &pb.GetRequest{
 		User:   req.GetUser(),
@@ -71,14 +71,46 @@ where id = $1 and author = $2`,
 
 	if err != nil {
 		log.Printf("Error when updating entries: %v", err)
-		return &pb.PostInfo{}, err
+		return nil, err
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return &pb.PostInfo{}, errors.New("not found")
+		return nil, errors.New("not found")
 	}
 	return s.Get(ctx, &pb.GetRequest{
 		User:   req.GetUser(),
 		PostId: req.GetPostId(),
 	})
+}
+
+func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.PostsInfo, error) {
+	pageSize := 10
+
+	rows, err := api.DB.Query(`select * from entries offset $1 limit $2`, int(req.GetPage()-1)*pageSize, pageSize)
+	if err != nil {
+		log.Printf("Error when querying entries: %v", err)
+		return &pb.PostsInfo{}, err
+	}
+	defer rows.Close()
+
+	var ids []uint32
+	for rows.Next() {
+		var id uint32
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	var totalCount int
+	err = api.DB.QueryRow("SELECT COUNT(*) FROM entries").Scan(&totalCount)
+	if err != nil {
+		log.Printf("Error when querying entries: %v", err)
+		return nil, err
+	}
+	return &pb.PostsInfo{
+		Page:       req.GetPage(),
+		TotalPages: uint32(totalCount / pageSize),
+		PostIds:    ids,
+	}, nil
 }

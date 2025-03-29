@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Content_Get_FullMethodName  = "/content_grpc.Content/Get"
-	Content_Post_FullMethodName = "/content_grpc.Content/Post"
-	Content_Put_FullMethodName  = "/content_grpc.Content/Put"
+	Content_Get_FullMethodName      = "/content_grpc.Content/Get"
+	Content_Post_FullMethodName     = "/content_grpc.Content/Post"
+	Content_Put_FullMethodName      = "/content_grpc.Content/Put"
+	Content_GetPosts_FullMethodName = "/content_grpc.Content/GetPosts"
 )
 
 // ContentClient is the client API for Content service.
@@ -31,6 +32,7 @@ type ContentClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*PostInfo, error)
 	Post(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostInfo, error)
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PostInfo, error)
+	GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*PostsInfo, error)
 }
 
 type contentClient struct {
@@ -71,6 +73,16 @@ func (c *contentClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *contentClient) GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*PostsInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostsInfo)
+	err := c.cc.Invoke(ctx, Content_GetPosts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServer is the server API for Content service.
 // All implementations must embed UnimplementedContentServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type ContentServer interface {
 	Get(context.Context, *GetRequest) (*PostInfo, error)
 	Post(context.Context, *PostRequest) (*PostInfo, error)
 	Put(context.Context, *PutRequest) (*PostInfo, error)
+	GetPosts(context.Context, *GetPostsRequest) (*PostsInfo, error)
 	mustEmbedUnimplementedContentServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedContentServer) Post(context.Context, *PostRequest) (*PostInfo
 }
 func (UnimplementedContentServer) Put(context.Context, *PutRequest) (*PostInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
+}
+func (UnimplementedContentServer) GetPosts(context.Context, *GetPostsRequest) (*PostsInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
 }
 func (UnimplementedContentServer) mustEmbedUnimplementedContentServer() {}
 func (UnimplementedContentServer) testEmbeddedByValue()                 {}
@@ -172,6 +188,24 @@ func _Content_Put_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Content_GetPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPostsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).GetPosts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_GetPosts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).GetPosts(ctx, req.(*GetPostsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Content_ServiceDesc is the grpc.ServiceDesc for Content service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var Content_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Put",
 			Handler:    _Content_Put_Handler,
+		},
+		{
+			MethodName: "GetPosts",
+			Handler:    _Content_GetPosts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
