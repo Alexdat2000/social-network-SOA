@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	pb "soa/gateway/content_grpc"
 	"soa/gateway/utils"
@@ -13,6 +14,7 @@ import (
 )
 
 func handleGet(w http.ResponseWriter, r *http.Request, users string) {
+	log.Printf("Received GET")
 	name, err := utils.VerifyJWT(r.URL.Query().Get("jwt"), users)
 	if err != nil {
 		if err.Error() == "incorrect JWT" {
