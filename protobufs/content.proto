@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "soa/content_grpc";
+
+package content_grpc;
+
+service Content {
+  rpc Get(GetRequest) returns (PostInfo) {}
+  rpc Post(PostRequest) returns (PostInfo) {}
+  rpc Put(PutRequest) returns (PostInfo) {}
+}
+
+message GetRequest {
+  string user = 1;
+  uint32 post_id = 2;
+}
+
+message PostRequest {
+  string user = 1;
+  string title = 2;
+  string description = 3;
+  bool is_private = 4;
+  repeated string tags = 5;
+}
+
+message PutRequest {
+  string user = 1;
+  uint32 post_id = 2;
+  string title = 3;
+  string description = 4;
+  bool is_private = 5;
+  repeated string tags = 6;
+}
+
+message PostInfo {
+  uint32 post_id = 1;
+  string title = 2;
+  string description = 3;
+  string author = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  bool is_private = 7;
+  repeated string tags = 8;
+}
