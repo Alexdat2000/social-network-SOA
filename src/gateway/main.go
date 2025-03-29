@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"soa/gateway/content"
 )
 
-var dest *string
-
-func proxyHandler(w http.ResponseWriter, r *http.Request) {
+func proxyHandler(w http.ResponseWriter, r *http.Request, dest string) {
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -22,7 +22,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-	targetURL := strings.TrimSuffix(*dest, "/") + r.URL.String()
+	targetURL := strings.TrimSuffix(dest, "/") + r.URL.String()
 	proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -63,11 +63,16 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	listen := flag.String("listen", "localhost:8080", "listen for address")
-	dest = flag.String("to", "localhost:8081", "redirect to this address")
+	users := flag.String("users", "localhost:8081", "user server at this address")
+	cont := flag.String("content", "localhost:8082", "content server at this address")
 	flag.Parse()
 
 	log.Printf("Listening on %s", *listen)
-	log.Printf("Redirecting to %s", *dest)
-	http.HandleFunc("/", proxyHandler)
+	log.Printf("User server at %s", *users)
+	log.Printf("Content server at %s", *cont)
+	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) { proxyHandler(w, r, *users) })
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) { proxyHandler(w, r, *users) })
+	http.HandleFunc("/entry", func(w http.ResponseWriter, r *http.Request) { content.HandleEntry(w, r, *users, *cont) })
+	http.HandleFunc("/all-entries", func(w http.ResponseWriter, r *http.Request) { content.HandleAllEntries(w, r, *users, *cont) })
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }

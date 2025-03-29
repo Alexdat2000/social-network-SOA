@@ -50,17 +50,16 @@ func connectToDB() {
 }
 
 func createTables() {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS users
+	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS entries
 (
-    username        VARCHAR(100) UNIQUE NOT NULL PRIMARY KEY,
-    email           VARCHAR(100) NOT NULL,
-    hashed_password VARCHAR(64)  NOT NULL,
-    first_name      VARCHAR(100),
-    last_name       VARCHAR(100),
-    date_of_birth   DATE,
-    phone_number    varchar(15),
+    id              INT UNIQUE NOT NULL PRIMARY KEY,
+    title           TEXT NOT NULL,
+    description     TEXT NOT NULL,
+    author          VARCHAR(64) NOT NULL,
     created_at      TIMESTAMP,
-    last_edited_at  TIMESTAMP
+    last_edited_at  TIMESTAMP,
+    is_private      boolean,
+    tags            TEXT
 );
 `)
 	if err != nil {

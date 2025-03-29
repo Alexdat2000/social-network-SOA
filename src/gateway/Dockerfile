@@ -3,7 +3,7 @@ FROM golang:1.24-alpine
 WORKDIR /src/gateway
 COPY go.* .
 RUN go mod download
-COPY * .
+COPY . .
 RUN go build .
 
 ENTRYPOINT ["./gateway"]
