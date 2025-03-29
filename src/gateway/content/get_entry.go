@@ -50,6 +50,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, users string) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	js, err := json.Marshal(ans)
 	fmt.Fprintf(w, string(js))
 }
