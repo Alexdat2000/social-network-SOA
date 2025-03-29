@@ -33,7 +33,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, users string) {
 	isPrivate := utils.ParsePostPrivate(r.URL.Query().Get("isPrivate"))
 	tags := r.URL.Query().Get("tags")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	ans, err := c.Post(ctx, &pb.PostRequest{

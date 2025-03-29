@@ -8,7 +8,7 @@ import (
 )
 
 func VerifyJWT(jwt, server string) (string, error) {
-	u, err := url.Parse(server)
+	u, err := url.Parse(server + "/token")
 	if err != nil {
 		fmt.Printf("Error parsing URL: %v\n", err)
 		return "", err

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,11 +21,9 @@ func TokenGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := fmt.Sprintf(`select username from users where username='%s'`, name)
-	row := DB.QueryRow(req)
-	var username string
-	err = row.Scan(&username)
-	if errors.Is(err, sql.ErrNoRows) {
+	var totalCount int
+	err = DB.QueryRow("SELECT COUNT(*) FROM users where username=$1", name).Scan(&totalCount)
+	if totalCount == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	} else if err != nil {

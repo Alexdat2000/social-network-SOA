@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+var (
+	noAccessError = errors.New("no access")
+)
+
 func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, error) {
 	log.Println("Received GET request")
 	re := fmt.Sprintf(`select * from entries where id='%d'`, req.GetPostId())
@@ -31,7 +35,7 @@ func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 		return nil, err
 	}
 	if ans.GetAuthor() != req.GetUser() && ans.IsPrivate {
-		return nil, errors.New("no access")
+		return nil, noAccessError
 	}
 	ans.Tags = strings.Split(tags, ",")
 	ans.CreatedAt = timestamppb.New(createdAt)
@@ -112,9 +116,9 @@ func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteR
 
 func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.PostsInfo, error) {
 	log.Println("Received GetAll request")
-	pageSize := 10
+	pageSize := 2
 
-	rows, err := api.DB.Query(`select * from entries offset $1 limit $2`, int(req.GetPage()-1)*pageSize, pageSize)
+	rows, err := api.DB.Query(`select id from entries order by id offset $1 limit $2`, int(req.GetPage()-1)*pageSize, pageSize)
 	if err != nil {
 		log.Printf("Error when querying entries: %v", err)
 		return &pb.PostsInfo{}, err
@@ -124,10 +128,12 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 	var ids []uint32
 	for rows.Next() {
 		var id uint32
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
+		err := rows.Scan(&id)
+		if err == nil {
+			ids = append(ids, id)
+		} else {
+			log.Printf("Entry error: %v", err)
 		}
-		ids = append(ids, id)
 	}
 
 	var totalCount int
@@ -138,7 +144,7 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 	}
 	return &pb.PostsInfo{
 		Page:       req.GetPage(),
-		TotalPages: uint32(totalCount / pageSize),
+		TotalPages: uint32((totalCount + pageSize - 1) / pageSize),
 		PostIds:    ids,
 	}, nil
 }

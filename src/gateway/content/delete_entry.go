@@ -28,7 +28,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, users string) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	ans, err := c.Delete(ctx, &pb.UserPostRequest{

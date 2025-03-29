@@ -28,16 +28,16 @@ func handlePut(w http.ResponseWriter, r *http.Request, users string) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	title := r.URL.Query().Get("postId")
+	title := r.URL.Query().Get("title")
 	if title == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	description := r.URL.Query().Get("postId")
-	isPrivate := utils.ParsePostPrivate(r.URL.Query().Get("postId"))
-	tags := r.URL.Query().Get("postId")
+	description := r.URL.Query().Get("description")
+	isPrivate := utils.ParsePostPrivate(r.URL.Query().Get("isPrivate"))
+	tags := r.URL.Query().Get("tags")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	ans, err := c.Put(ctx, &pb.PutRequest{
