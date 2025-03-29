@@ -1,12 +1,12 @@
-package content
+package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"soa/content/api"
 	pb "soa/content/content_grpc"
 )
 
@@ -14,19 +14,8 @@ type server struct {
 	pb.UnimplementedContentServer
 }
 
-func (s *server) Get(_ context.Context, req *pb.GetRequest) (*pb.PostInfo, error) {
-	return &pb.PostInfo{}, nil
-}
-
-func (s *server) Post(_ context.Context, req *pb.PostRequest) (*pb.PostInfo, error) {
-	return &pb.PostInfo{}, nil
-}
-
-func (s *server) Put(_ context.Context, req *pb.PutRequest) (*pb.PostInfo, error) {
-	return &pb.PostInfo{}, nil
-}
-
 func main() {
+	api.InitDB()
 	port := flag.Int("port", 50051, "The server port")
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))

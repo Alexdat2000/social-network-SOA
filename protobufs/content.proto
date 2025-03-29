@@ -40,7 +40,7 @@ message PostInfo {
   string description = 3;
   string author = 4;
   google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp last_edited_at = 6;
   bool is_private = 7;
   repeated string tags = 8;
 }

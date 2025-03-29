@@ -66,6 +66,49 @@ services:
             PRIVATE_KEY: /tmp/private.pem
             PUBLIC_KEY: /tmp/public.pem
 
+    content:
+        build:
+            context: src/content
+        command: [ "./content", "--port", "50051" ]
+        restart: always
+        environment:
+            DB_HOST: postgres_content
+            DB_PORT: 5432
+            DB_USER: ${DB_USER:-postgres}
+            DB_PASSWORD: ${DB_PASSWORD:-postgres}
+            DB_NAME: ${DB_NAME:-entries}
+            DB_SSL_MODE: disable
+            PRIVATE_KEY: /tmp/private.pem
+            PUBLIC_KEY: /tmp/public.pem
+        depends_on:
+            postgres_content:
+                condition: service_healthy
+            gateway:
+                condition: service_started
+        networks:
+            - backend
+
+    postgres_content:
+        image: postgres:15-alpine
+        container_name: postgres_content
+        restart: always
+        environment:
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+            POSTGRES_DB: ${DB_NAME:-entries}
+            PGDATA: /var/lib/postgresql/data/pgdata_content
+        ports:
+            - "5433:5432"
+        volumes:
+            - pgdata:/var/lib/postgresql/data_content
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U postgres -d entries" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        networks:
+            - backend
+
 volumes:
     pgdata:
         driver: local
