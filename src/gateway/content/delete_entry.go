@@ -41,6 +41,9 @@ func handleDelete(w http.ResponseWriter, r *http.Request, users string) {
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	} else if !ans.Successful {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	js, err := json.Marshal(ans)
