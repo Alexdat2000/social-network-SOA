@@ -3,10 +3,12 @@ info:
   title: Social Network
   description: |-
     This is a homework project for Service-Oriented Architectures cource
-  version: 0.1.0
+  version: 0.2.0
 tags:
   - name: users
     description: Responsible for user authentication, permissions and user profiles
+  - name: post
+    description: Responsible for posts
 
 paths:
   /users:
@@ -163,6 +165,161 @@ paths:
         '404':
           description: User not found
 
+  /entry:
+    get:
+      summary: Get post
+      tags:
+        - post
+      parameters:
+        - name: jwt
+          description: JWT token for user
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: postId
+          description: Post ID
+          required: true
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostInfo'
+
+    post:
+      summary: Create a new post
+      description: Creates a new post for a user
+      operationId: createPost
+      tags:
+        - post
+      parameters:
+        - name: jwt
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: title
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: description
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: is_private
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: tags
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Successfully created post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostInfo'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update a post
+      description: Updates an existing post
+      operationId: putPost
+      tags:
+        - post
+      parameters:
+        - name: postId
+          required: true
+          in: query
+          schema:
+            type: integer
+        - name: jwt
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: title
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: description
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: is_private
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: tags
+          required: true
+          in: query
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Successfully updated post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostInfo'
+        '404':
+          description: Post not found
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Delete a post
+      description: Deletes a specific post
+      operationId: deletePost
+      tags:
+        - post
+      parameters:
+        - name: jwt
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: post_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: uint32
+          description: The ID of the post to delete
+      responses:
+        '200':
+          description: Successfully deleted post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResult'
+        '404':
+          description: Post not found
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
 components:
   schemas:
     Profile:
@@ -192,3 +349,61 @@ components:
         lastEditedAt:
           type: integer
           example: 1740945570
+
+    PostInfo:
+      type: object
+      properties:
+        post_id:
+          type: integer
+          format: uint32
+          description: The ID of the post
+        title:
+          type: string
+          description: The title of the post
+        description:
+          type: string
+          description: The description/content of the post
+        author:
+          type: string
+          description: The author of the post
+        created_at:
+          type: string
+          format: date-time
+          description: When the post was created
+        last_edited_at:
+          type: string
+          format: date-time
+          description: When the post was last edited
+        is_private:
+          type: boolean
+          description: Whether the post is private
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags associated with the post
+
+    DeleteResult:
+      type: object
+      properties:
+        successful:
+          type: boolean
+          description: Whether the delete operation was successful
+
+    PostsInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          format: uint32
+          description: The current page number
+        total_pages:
+          type: integer
+          format: uint32
+          description: The total number of pages available
+        postIds:
+          type: array
+          items:
+            type: integer
+            format: uint32
+          description: List of post IDs for the current page
