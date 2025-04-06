@@ -81,4 +81,11 @@ var routes = Routes{
 		"/users",
 		UsersPost,
 	},
+
+	Route{
+		"Token",
+		strings.ToUpper("Get"),
+		"/token",
+		TokenGet,
+	},
 }
