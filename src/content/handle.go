@@ -40,6 +40,11 @@ func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 	ans.Tags = strings.Split(tags, ",")
 	ans.CreatedAt = timestamppb.New(createdAt)
 	ans.LastEditedAt = timestamppb.New(lastEditedAt)
+	err = api.ReportToKafka("post-views", fmt.Sprintf("{username:%s,post_id:%d,timestamp:%s}",
+		req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)))
+	if err != nil {
+		log.Printf("%v", err)
+	}
 	return &ans, nil
 }
 
@@ -95,7 +100,7 @@ where id = $1 and author = $2`,
 	})
 }
 
-func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteResult, error) {
+func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.BoolResult, error) {
 	log.Println("Received DELETE request")
 	res, err := api.DB.Exec(`delete from entries where id = $1 and author = $2`, req.GetPostId(), req.GetUser())
 	if err != nil {
@@ -108,9 +113,9 @@ func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteR
 		return nil, err
 	}
 	if count == 0 {
-		return &pb.DeleteResult{Successful: false}, nil
+		return &pb.BoolResult{Successful: false}, nil
 	} else {
-		return &pb.DeleteResult{Successful: true}, nil
+		return &pb.BoolResult{Successful: true}, nil
 	}
 }
 
@@ -147,4 +152,22 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 		TotalPages: uint32((totalCount + pageSize - 1) / pageSize),
 		PostIds:    ids,
 	}, nil
+}
+
+func (s *server) LikePost(req *pb.UserPostRequest) (*pb.BoolResult, error) {
+	err := api.ReportToKafka("post-likes", fmt.Sprintf("{username:%s,post_id:%d,timestamp:%s}",
+		req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)))
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	return &pb.BoolResult{Successful: true}, nil
+}
+
+func (s *server) PostComment(req *pb.PostCommentRequest) (*pb.BoolResult, error) {
+	err := api.ReportToKafka("post-comments", fmt.Sprintf("{username:%s,post_id:%d,comment_length:%d,timestamp:%s}",
+		req.GetUser(), req.GetPostId(), len(req.GetText()), time.Now().Format(time.RFC3339)))
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	return &pb.BoolResult{Successful: true}, nil
 }

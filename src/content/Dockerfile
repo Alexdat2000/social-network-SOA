@@ -1,9 +1,11 @@
 FROM golang:1.24-alpine
 
+RUN apk update && apk add --no-cache gcc musl-dev git
+
 WORKDIR /src/content
 COPY go.* .
 RUN go mod download
 COPY . .
-RUN go build .
+RUN CGO_ENABLED=1 go build -tags musl -ldflags '-extldflags "-static"' .
 
 ENTRYPOINT ["./content"]

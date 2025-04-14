@@ -10,8 +10,10 @@ service Content {
   rpc Get(UserPostRequest) returns (PostInfo) {}
   rpc Post(PostRequest) returns (PostInfo) {}
   rpc Put(PutRequest) returns (PostInfo) {}
-  rpc Delete(UserPostRequest) returns (DeleteResult) {}
+  rpc Delete(UserPostRequest) returns (BoolResult) {}
   rpc GetPosts(GetPostsRequest) returns (PostsInfo) {}
+  rpc LikePost(UserPostRequest) returns (BoolResult) {}
+  rpc PostComment(PostCommentRequest) returns (BoolResult) {}
 }
 
 message UserPostRequest {
@@ -47,7 +49,7 @@ message PostInfo {
   repeated string tags = 8;
 }
 
-message DeleteResult {
+message BoolResult {
   bool successful = 1;
 }
 
@@ -59,4 +61,10 @@ message PostsInfo {
   uint32 page = 1;
   uint32 total_pages = 2;
   repeated uint32 postIds = 3 [packed=true];
+}
+
+message PostCommentRequest {
+  string user = 1;
+  uint32 post_id = 2;
+  string text = 3;
 }

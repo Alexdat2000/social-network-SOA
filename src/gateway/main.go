@@ -76,5 +76,7 @@ func main() {
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) { proxyHandler(w, r, *users) })
 	http.HandleFunc("/entry", func(w http.ResponseWriter, r *http.Request) { content.HandleEntry(w, r, *users, *cont) })
 	http.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) { content.HandleList(w, r, *users, *cont) })
+	http.HandleFunc("/like", func(w http.ResponseWriter, r *http.Request) { content.HandleLike(w, r, *users, *cont) })
+	http.HandleFunc("/comment", func(w http.ResponseWriter, r *http.Request) { content.HandleComment(w, r, *users, *cont) })
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }
