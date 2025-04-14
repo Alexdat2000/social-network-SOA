@@ -33,7 +33,7 @@ func HandleLike(w http.ResponseWriter, r *http.Request, users string) {
 		User:   name,
 		PostId: postId,
 	})
-	if err != nil && ans != nil && ans.GetSuccessful() == true {
+	if err == nil && ans != nil && ans.GetSuccessful() == true {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)

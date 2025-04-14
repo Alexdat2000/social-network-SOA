@@ -34,7 +34,7 @@ func HandleComment(w http.ResponseWriter, r *http.Request, users string) {
 		PostId: postId,
 		Text:   r.URL.Query().Get("text"),
 	})
-	if err != nil && ans != nil && ans.GetSuccessful() == true {
+	if err == nil && ans != nil && ans.GetSuccessful() == true {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)

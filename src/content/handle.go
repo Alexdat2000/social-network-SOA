@@ -154,7 +154,7 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 	}, nil
 }
 
-func (s *server) LikePost(req *pb.UserPostRequest) (*pb.BoolResult, error) {
+func (s *server) LikePost(_ context.Context, req *pb.UserPostRequest) (*pb.BoolResult, error) {
 	err := api.ReportToKafka("post-likes", fmt.Sprintf("{username:%s,post_id:%d,timestamp:%s}",
 		req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)))
 	if err != nil {
@@ -163,7 +163,7 @@ func (s *server) LikePost(req *pb.UserPostRequest) (*pb.BoolResult, error) {
 	return &pb.BoolResult{Successful: true}, nil
 }
 
-func (s *server) PostComment(req *pb.PostCommentRequest) (*pb.BoolResult, error) {
+func (s *server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*pb.BoolResult, error) {
 	err := api.ReportToKafka("post-comments", fmt.Sprintf("{username:%s,post_id:%d,comment_length:%d,timestamp:%s}",
 		req.GetUser(), req.GetPostId(), len(req.GetText()), time.Now().Format(time.RFC3339)))
 	if err != nil {
