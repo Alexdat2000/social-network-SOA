@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -17,6 +18,12 @@ import (
 var (
 	noAccessError = errors.New("no access")
 )
+
+type GetEvent struct {
+	Username  string `json:"username"`
+	PostId    uint32 `json:"post_id"`
+	Timestamp string `json:"timestamp"`
+}
 
 func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, error) {
 	log.Println("Received GET request")
@@ -40,8 +47,9 @@ func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 	ans.Tags = strings.Split(tags, ",")
 	ans.CreatedAt = timestamppb.New(createdAt)
 	ans.LastEditedAt = timestamppb.New(lastEditedAt)
-	err = api.ReportToKafka("post-views", fmt.Sprintf("{username:%s,post_id:%d,timestamp:%s}",
-		req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)))
+
+	msg, _ := json.Marshal(GetEvent{req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)})
+	err = api.ReportToKafka("post-views", msg)
 	if err != nil {
 		log.Printf("%v", err)
 	}
@@ -155,17 +163,33 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 }
 
 func (s *server) LikePost(_ context.Context, req *pb.UserPostRequest) (*pb.BoolResult, error) {
-	err := api.ReportToKafka("post-likes", fmt.Sprintf("{username:%s,post_id:%d,timestamp:%s}",
-		req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)))
+	msg, _ := json.Marshal(GetEvent{
+		req.GetUser(),
+		req.GetPostId(),
+		time.Now().Format(time.RFC3339),
+	})
+	err := api.ReportToKafka("post-likes", msg)
 	if err != nil {
 		log.Printf("%v", err)
 	}
 	return &pb.BoolResult{Successful: true}, nil
 }
 
+type CommentEvent struct {
+	Username  string `json:"username"`
+	PostId    uint32 `json:"post_id"`
+	Comment   string `json:"comment"`
+	Timestamp string `json:"timestamp"`
+}
+
 func (s *server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*pb.BoolResult, error) {
-	err := api.ReportToKafka("post-comments", fmt.Sprintf("{username:%s,post_id:%d,comment_length:%d,timestamp:%s}",
-		req.GetUser(), req.GetPostId(), len(req.GetText()), time.Now().Format(time.RFC3339)))
+	msg, _ := json.Marshal(CommentEvent{
+		req.GetUser(),
+		req.GetPostId(),
+		req.GetText(),
+		time.Now().Format(time.RFC3339),
+	})
+	err := api.ReportToKafka("post-comments", msg)
 	if err != nil {
 		log.Printf("%v", err)
 	}

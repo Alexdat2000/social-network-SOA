@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"log"
@@ -20,12 +21,19 @@ func ConnectToKafka() {
 	log.Println("Successfully connected to the Kafka broker!")
 }
 
+type RegisterEvent struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Timestamp string `json:"timestamp"`
+}
+
 func ReportRegisterToKafka(username, email string, t time.Time) error {
 	topic := "user-registrations"
 
+	msg, _ := json.Marshal(RegisterEvent{username, email, t.Format(time.RFC3339)})
 	message := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          []byte(fmt.Sprintf("{username:%s,email:%s,timestamp:%s}", username, email, t.Format(time.RFC3339))),
+		Value:          msg,
 	}
 
 	deliveryChan := make(chan kafka.Event)

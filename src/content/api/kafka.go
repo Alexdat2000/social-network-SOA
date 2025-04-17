@@ -19,10 +19,10 @@ func ConnectToKafka() {
 	log.Println("Successfully connected to the Kafka broker!")
 }
 
-func ReportToKafka(topic, value string) error {
+func ReportToKafka(topic string, value []byte) error {
 	message := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          []byte(value),
+		Value:          value,
 	}
 
 	deliveryChan := make(chan kafka.Event)
