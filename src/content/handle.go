@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -17,6 +18,12 @@ import (
 var (
 	noAccessError = errors.New("no access")
 )
+
+type GetEvent struct {
+	Username  string `json:"username"`
+	PostId    uint32 `json:"post_id"`
+	Timestamp string `json:"timestamp"`
+}
 
 func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, error) {
 	log.Println("Received GET request")
@@ -40,6 +47,12 @@ func (s *server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 	ans.Tags = strings.Split(tags, ",")
 	ans.CreatedAt = timestamppb.New(createdAt)
 	ans.LastEditedAt = timestamppb.New(lastEditedAt)
+
+	msg, _ := json.Marshal(GetEvent{req.GetUser(), req.GetPostId(), time.Now().Format(time.RFC3339)})
+	err = api.ReportToKafka("post-views", msg)
+	if err != nil {
+		log.Printf("%v", err)
+	}
 	return &ans, nil
 }
 
@@ -95,7 +108,7 @@ where id = $1 and author = $2`,
 	})
 }
 
-func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteResult, error) {
+func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.BoolResult, error) {
 	log.Println("Received DELETE request")
 	res, err := api.DB.Exec(`delete from entries where id = $1 and author = $2`, req.GetPostId(), req.GetUser())
 	if err != nil {
@@ -108,9 +121,9 @@ func (s *server) Delete(_ context.Context, req *pb.UserPostRequest) (*pb.DeleteR
 		return nil, err
 	}
 	if count == 0 {
-		return &pb.DeleteResult{Successful: false}, nil
+		return &pb.BoolResult{Successful: false}, nil
 	} else {
-		return &pb.DeleteResult{Successful: true}, nil
+		return &pb.BoolResult{Successful: true}, nil
 	}
 }
 
@@ -147,4 +160,38 @@ func (s *server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 		TotalPages: uint32((totalCount + pageSize - 1) / pageSize),
 		PostIds:    ids,
 	}, nil
+}
+
+func (s *server) LikePost(_ context.Context, req *pb.UserPostRequest) (*pb.BoolResult, error) {
+	msg, _ := json.Marshal(GetEvent{
+		req.GetUser(),
+		req.GetPostId(),
+		time.Now().Format(time.RFC3339),
+	})
+	err := api.ReportToKafka("post-likes", msg)
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	return &pb.BoolResult{Successful: true}, nil
+}
+
+type CommentEvent struct {
+	Username  string `json:"username"`
+	PostId    uint32 `json:"post_id"`
+	Comment   string `json:"comment"`
+	Timestamp string `json:"timestamp"`
+}
+
+func (s *server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*pb.BoolResult, error) {
+	msg, _ := json.Marshal(CommentEvent{
+		req.GetUser(),
+		req.GetPostId(),
+		req.GetText(),
+		time.Now().Format(time.RFC3339),
+	})
+	err := api.ReportToKafka("post-comments", msg)
+	if err != nil {
+		log.Printf("%v", err)
+	}
+	return &pb.BoolResult{Successful: true}, nil
 }

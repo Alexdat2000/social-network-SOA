@@ -16,6 +16,8 @@ type server struct {
 
 func main() {
 	api.InitDB()
+	api.ConnectToKafka()
+
 	port := flag.Int("port", 50051, "The server port")
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))

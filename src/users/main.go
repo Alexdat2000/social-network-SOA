@@ -17,6 +17,8 @@ import (
 func main() {
 	api.InitDB()
 	api.InitAuthHandler()
+	api.ConnectToKafka()
+
 	log.Printf("Server started")
 	router := api.NewRouter()
 	log.Fatal(http.ListenAndServe(":8080", router))

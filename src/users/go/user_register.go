@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -105,5 +106,9 @@ values ($1, $2, $3, $4, $5)`,
 		}
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "\"%s\"", token)
+		err = ReportRegisterToKafka(username, email, t)
+		if err != nil {
+			log.Print(err)
+		}
 	}
 }

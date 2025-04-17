@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func HandleEntry(w http.ResponseWriter, r *http.Request, users, cont string) {
+func HandleEntry(w http.ResponseWriter, r *http.Request, users string) {
 	if r.Method == http.MethodGet {
 		handleGet(w, r, users)
 	} else if r.Method == http.MethodPost {
@@ -24,7 +24,7 @@ func HandleEntry(w http.ResponseWriter, r *http.Request, users, cont string) {
 	}
 }
 
-func HandleList(w http.ResponseWriter, r *http.Request, users, cont string) {
+func HandleList(w http.ResponseWriter, r *http.Request) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 0 {
 		w.WriteHeader(http.StatusBadRequest)
