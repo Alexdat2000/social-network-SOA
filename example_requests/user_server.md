@@ -15,7 +15,7 @@ curl -X POST "http://localhost:8080/users?username=alex&password=PassW0rd&email=
 
 ### Register user
 ```shell
-curl -X POST "http://localhost:8080/users?username=alex&password=Pass1@_W&email=alex@example.com" -i
+curl -X POST "http://localhost:8080/users?username=alex10&password=Pass1@_W&email=alex@example.com" -i
 ```
 
 ### Get user info (null fields are skipped)
