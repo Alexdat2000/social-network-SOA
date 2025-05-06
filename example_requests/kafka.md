@@ -11,15 +11,15 @@ curl -X POST "http://localhost:8080/entry?title=New%20post&description=Post%20co
 
 ### Get post
 ```shell
-curl -X GET "http://localhost:8080/entry?postId=352604672&&jwt=$jwt" -i
+curl -X GET "http://localhost:8080/entry?postId=228673515&&jwt=$jwt" -i
 ```
 
 ### Like
 ```shell
-curl -X POST "http://localhost:8080/like?postId=352604672&&jwt=$jwt" -i
+curl -X POST "http://localhost:8080/like?postId=228673515&&jwt=$jwt" -i
 ```
 
 ### Comment
 ```shell
-curl -X POST "http://localhost:8080/comment?postId=352604672&&text=my%20comment&jwt=$jwt" -i
+curl -X POST "http://localhost:8080/comment?postId=228673515&&text=my%20comment&jwt=$jwt" -i
 ```
