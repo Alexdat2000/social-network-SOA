@@ -3,7 +3,7 @@ name: Deploy API Docs
 on:
   push:
     branches:
-      - hw5
+      - main
 
 permissions:
   contents: read
@@ -21,7 +21,7 @@ jobs:
           api-configs: |
             [
               {
-                "branch": "hw5",
+                "branch": "main",
                 "openapi-json-filepath": "docs/openapi.json",
                 "api-doc-filepath": "api-docs"
               }
