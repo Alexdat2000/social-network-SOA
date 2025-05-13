@@ -25,7 +25,13 @@ jobs:
             [
               {
                 "openapi-json-filepath": "docs/openapi.json",
-                "api-doc-filepath": "api-docs"
+                "api-doc-filepath": "index.html"
               }
             ]
           api-docs-dir: docs
+
+      - name: Deploy generated docs to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
