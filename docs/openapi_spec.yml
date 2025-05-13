@@ -746,6 +746,8 @@ components:
           items:
             type: string
           example: ["work", "Golang"]
+      required:
+        - postId
 
     ErrorMessage:
       type: object

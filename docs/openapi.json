@@ -1092,7 +1092,10 @@
               "Golang"
             ]
           }
-        }
+        },
+        "required": [
+          "postId"
+        ]
       },
       "ErrorMessage": {
         "type": "object",
