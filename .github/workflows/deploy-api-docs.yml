@@ -1,9 +1,10 @@
-name: Deploy API Docs
+name: Generate API docs and deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,19 +12,20 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  generate-api-docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Generate API docs and deploy to GitHub Pages
         uses: msayson/openapi-github-pages-action@v2.0.0
         with:
           api-configs: |
             [
               {
-                "branch": "main",
                 "openapi-json-filepath": "docs/openapi.json",
                 "api-doc-filepath": "api-docs"
               }
             ]
-          api-docs-dir: 'docs'
+          api-docs-dir: docs
