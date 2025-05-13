@@ -1,162 +1,156 @@
 services:
-    gateway:
-        build:
-            context: src/gateway
-            target: runtime
-        command: ["--listen", ":8080", "--users", "http://users:8080", "--content", "content:50051"]
-        ports:
-            - "8080:8080"
+#  gateway:
+#    build:
+#      context: src/gateway
+#      target: runtime
+#    command: [ "--listen", ":8080", "--users", "http://users:8080", "--content", "content:50051" ]
+#    ports:
+#      - "8080:8080"
+#
+#  gateway_tests:
+#    build:
+#      context: src/gateway
+#      target: test
 
-    gateway_tests:
-        build:
-            context: src/gateway
-            target: test
+  users:
+    build:
+      context: src/users
+      target: runtime
+    volumes:
+      - ./credentials/private.pem:/tmp/private.pem
+      - ./credentials/public.pem:/tmp/public.pem
+    ports:
+      - "8081:8080"
+    restart: always
+    environment:
+      DB_HOST: postgres_users
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-users}
+      DB_SSL_MODE: disable
+      PRIVATE_KEY: /tmp/private.pem
+      PUBLIC_KEY: /tmp/public.pem
+    depends_on:
+      postgres_users:
+        condition: service_healthy
 
-    users:
-        build:
-            context: src/users
-            target: runtime
-        volumes:
-            - ./credentials/private.pem:/tmp/private.pem
-            - ./credentials/public.pem:/tmp/public.pem
-        command: ["./api", "--port", "8080"]
-        restart: always
-        environment:
-            DB_HOST: postgres_users
-            DB_PORT: 5432
-            DB_USER: ${DB_USER:-postgres}
-            DB_PASSWORD: ${DB_PASSWORD:-postgres}
-            DB_NAME: ${DB_NAME:-users}
-            DB_SSL_MODE: disable
-            PRIVATE_KEY: /tmp/private.pem
-            PUBLIC_KEY: /tmp/public.pem
-        depends_on:
-            postgres_users:
-                condition: service_healthy
-            gateway:
-                condition: service_started
+  postgres_users:
+    image: postgres:15-alpine
+    container_name: postgres_users
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-users}
+      PGDATA: /var/lib/postgresql/data/pgdata_users
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/users/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d users" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-    postgres_users:
-        image: postgres:15-alpine
-        container_name: postgres_users
-        restart: always
-        environment:
-            POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-            POSTGRES_DB: ${DB_NAME:-users}
-            PGDATA: /var/lib/postgresql/data/pgdata_users
-        ports:
-            - "5432:5432"
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-        healthcheck:
-            test: [ "CMD-SHELL", "pg_isready -U postgres -d users" ]
-            interval: 10s
-            timeout: 5s
-            retries: 3
+  users_tests:
+    build:
+      context: src/users
+      target: test-runner
+    command: ["go", "test", "-v", "./..."]
+    volumes:
+      - ./credentials/private.pem:/tmp/private.pem
+      - ./credentials/public.pem:/tmp/public.pem
+    environment:
+      PRIVATE_KEY: /tmp/private.pem
+      PUBLIC_KEY: /tmp/public.pem
 
-    users_tests:
-        build:
-            context: src/users
-            target: test
-        volumes:
-            - ./credentials/private.pem:/tmp/private.pem
-            - ./credentials/public.pem:/tmp/public.pem
-        environment:
-            PRIVATE_KEY: /tmp/private.pem
-            PUBLIC_KEY: /tmp/public.pem
-
-    content:
-        build:
-            context: src/content
-        command: [ "./content", "--port", "50051" ]
-        restart: always
-        environment:
-            DB_HOST: postgres_content
-            DB_PORT: 5432
-            DB_USER: ${DB_USER:-postgres}
-            DB_PASSWORD: ${DB_PASSWORD:-postgres}
-            DB_NAME: ${DB_NAME:-entries}
-            DB_SSL_MODE: disable
-            PRIVATE_KEY: /tmp/private.pem
-            PUBLIC_KEY: /tmp/public.pem
-        depends_on:
-            postgres_content:
-                condition: service_healthy
-            gateway:
-                condition: service_started
-
-    postgres_content:
-        image: postgres:15-alpine
-        container_name: postgres_content
-        restart: always
-        environment:
-            POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-            POSTGRES_DB: ${DB_NAME:-entries}
-            PGDATA: /var/lib/postgresql/data/pgdata_content
-        ports:
-            - "5433:5432"
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-        healthcheck:
-            test: [ "CMD-SHELL", "pg_isready -U postgres -d entries" ]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-
-    zookeeper:
-        image: confluentinc/cp-zookeeper:7.2.1
-        hostname: zookeeper
-        container_name: zookeeper
-        ports:
-            - "2181:2181"
-        environment:
-            ZOOKEEPER_CLIENT_PORT: 2181
-            ZOOKEEPER_TICK_TIME: 2000
-        healthcheck:
-            test: [ "CMD", "nc", "-z", "localhost", "2181" ]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-            start_period: 15s
-
-    kafka:
-        image: confluentinc/cp-server:7.2.1
-        hostname: kafka
-        container_name: kafka
-        depends_on:
-            zookeeper:
-                condition: service_healthy
-        ports:
-            - "9092:9092"
-            - "9997:9997"
-        environment:
-            KAFKA_BROKER_ID: 1
-            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
-            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-            KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-            KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-            KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-            KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-            KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-            KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-            KAFKA_JMX_PORT: 9997
-            KAFKA_JMX_HOSTNAME: kafka
-            confluent.reporters.telemetry.auto.enable: "false"
-            confluent.telemetry.enabled: "false"
-
-    kafka-ui:
-        container_name: kafka-ui
-        image: provectuslabs/kafka-ui:latest
-        ports:
-            - 8082:8080
-        environment:
-            DYNAMIC_CONFIG_ENABLED: true
-            KAFKA_CLUSTERS_0_NAME: local
-            KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+#  content:
+#    build:
+#      context: src/content
+#    command: [ "./content", "--port", "50051" ]
+#    restart: always
+#    environment:
+#      DB_HOST: postgres_content
+#      DB_PORT: 5432
+#      DB_USER: ${DB_USER:-postgres}
+#      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+#      DB_NAME: ${DB_NAME:-entries}
+#      DB_SSL_MODE: disable
+#      PRIVATE_KEY: /tmp/private.pem
+#      PUBLIC_KEY: /tmp/public.pem
+#    depends_on:
+#      postgres_content:
+#        condition: service_healthy
+#      gateway:
+#        condition: service_started
+#
+#  postgres_content:
+#    image: postgres:15-alpine
+#    container_name: postgres_content
+#    restart: always
+#    environment:
+#      POSTGRES_USER: ${DB_USER:-postgres}
+#      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+#      POSTGRES_DB: ${DB_NAME:-entries}
+#      PGDATA: /var/lib/postgresql/data/pgdata_content
+#    ports:
+#      - "5433:5432"
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U postgres -d entries" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 3
+#
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.2.1
+#    hostname: zookeeper
+#    container_name: zookeeper
+#    ports:
+#      - "2181:2181"
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#
+#  kafka:
+#    image: confluentinc/cp-server:7.2.1
+#    hostname: kafka
+#    container_name: kafka
+#    depends_on:
+#      - zookeeper
+#    ports:
+#      - "9092:9092"
+#      - "9997:9997"
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#      KAFKA_JMX_PORT: 9997
+#      KAFKA_JMX_HOSTNAME: kafka
+#      confluent.reporters.telemetry.auto.enable: "false"
+#      confluent.telemetry.enabled: "false"
+#
+#  kafka-ui:
+#    container_name: kafka-ui
+#    image: provectuslabs/kafka-ui:latest
+#    ports:
+#      - 8082:8080
+#    environment:
+#      DYNAMIC_CONFIG_ENABLED: true
+#      KAFKA_CLUSTERS_0_NAME: local
+#      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
 
 volumes:
-    pgdata:
-        driver: local
+  pgdata:
+    driver: local

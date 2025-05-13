@@ -2,7 +2,6 @@ package api
 
 import (
 	"crypto/rsa"
-	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"os"
@@ -21,11 +20,10 @@ type AuthHandlers struct {
 
 var AH *AuthHandlers
 
-func NewAuthHandlers(jwtprivateFile string, jwtPublicFile string) *AuthHandlers {
+func newAuthHandlers(jwtprivateFile string, jwtPublicFile string) *AuthHandlers {
 	private, err := os.ReadFile(jwtprivateFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	public, err := os.ReadFile(jwtPublicFile)
 	if err != nil {
@@ -80,5 +78,5 @@ func InitAuthHandler() {
 		log.Fatalf("Error while reading public key: %v", err)
 	}
 
-	AH = NewAuthHandlers(privateFile, publicFile)
+	AH = newAuthHandlers(privateFile, publicFile)
 }

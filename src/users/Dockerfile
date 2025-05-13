@@ -1,20 +1,27 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.24-alpine AS builder
 
-RUN apk update && apk add --no-cache gcc musl-dev git
+WORKDIR /app
 
-WORKDIR /src/users
-COPY go ./go
-COPY tests ./tests
-COPY main.go .
-COPY go.* .
+COPY go.mod go.sum ./
+RUN go mod download
 
-RUN go get -v ./...
+COPY . .
 
-RUN CGO_ENABLED=1 go build -tags musl -ldflags '-extldflags "-static"' -a -installsuffix cgo -o api .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 
-FROM scratch AS runtime
-COPY --from=build /src/users/api ./
-ENTRYPOINT ["./api"]
+FROM golang:1.24-alpine AS test-runner
 
-FROM build AS test
-CMD ["go", "test", "-v", "./tests/..."]
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+FROM alpine:3.17 AS runtime
+
+WORKDIR /root/
+
+COPY --from=builder /app/main .
+
+CMD ["./main"]
