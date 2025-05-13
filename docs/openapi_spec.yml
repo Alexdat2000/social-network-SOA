@@ -2,8 +2,8 @@ openapi: 3.0.3
 info:
   title: Social Network
   description: |-
-    This is a homework project for Service-Oriented Architectures cource
-  version: 0.2.0
+    This is a homework project for Service-Oriented Architectures course
+  version: 0.3.0
 tags:
   - name: users
     description: User registration, authentication and profile information
@@ -14,35 +14,86 @@ tags:
   - name: statistics
     description: Statistics of user interactions
 
+security:
+  - bearerAuth: []
+
 paths:
-  /user/register:
+  /users/login:
+    post:
+      summary: Get JWT token for user
+      description: Login into account with login and password and get a JWT token for that user
+      tags:
+        - users
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: Alex
+                password:
+                  type: string
+                  example: P@ssW0rd
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                properties:
+                  jwt:
+                    type: string
+                    description: JWT for registered user
+                    example: example.jwt.token
+                required:
+                  - jwt
+        '400':
+          description: Invalid request
+        '401':
+          description: Incorrect credentials
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /users:
     post:
       summary: Register new user
       description: Make a new user with given email, username and password
       tags:
         - users
-      parameters:
-        - name: email
-          in: query
-          required: true
-          schema:
-            type: string
-            example: alex@example.com
-        - name: username
-          in: query
-          required: true
-          schema:
-            type: string
-            example: Alex
-        - name: password
-          in: query
-          required: true
-          schema:
-            type: string
-            example: P@ssW0rd
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: alex@example.com
+                username:
+                  type: string
+                  example: Alex
+                password:
+                  type: string
+                  example: P@ssW0rd
+              required:
+                - email
+                - username
+                - password
       responses:
-        '200':
-          description: Successful response
+        '201':
+          description: Successful registration
           content:
             application/json:
               schema:
@@ -54,103 +105,51 @@ paths:
                     example: example.jwt.token
                 required:
                   - jwt
-                  - name
         '400':
           description: Invalid username, password or email supplied
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Password should be at least 8 characters
-                required:
-                  - error
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: User already exists
         '500':
           description: Internal server error
 
-  /user/login:
-    get:
-      summary: Get JWT token for user
-      description: Login into account with login and password and get a JWT token for that user
-      tags:
-        - users
-      parameters:
-        - name: username
-          in: query
-          required: true
-          schema:
-            type: string
-            example: Alex
-        - name: password
-          in: query
-          required: true
-          schema:
-            type: string
-            example: P@ssW0rd
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: string
-                example: example.jwt.token
-        '400':
-          description: Invalid request
-        '401':
-          description: Incorrect credentials
-        '404':
-          description: User not found
-        '500':
-          description: Internal server error
-
-  /user/update:
     patch:
       summary: Update user information
       description: Update fields in user profile. Empty field means no change
       tags:
         - users
-      parameters:
-        - name: jwt
-          in: query
-          description: User JWT token
-          required: true
-          schema:
-            type: string
-            example: example.jwt.token
-        - name: email
-          in: query
-          description: Updated email
-          schema:
-            type: string
-            example: alex@example.com
-        - name: firstName
-          in: query
-          description: Updated first name
-          schema:
-            type: string
-            example: Alex
-        - name: lastName
-          in: query
-          description: Updated last name
-          schema:
-            type: string
-            example: Dat
-        - name: dateOfBirth
-          in: query
-          description: Updated date of birth
-          schema:
-            type: string
-            format: date
-            example: 1970-12-31
-        - name: phoneNumber
-          in: query
-          description: Updated phone number
-          schema:
-            type: string
-            example: 800-555-0100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Updated email
+                  format: email
+                  example: alex@example.com
+                firstName:
+                  type: string
+                  description: Updated first name
+                  example: Alex
+                lastName:
+                  type: string
+                  description: Updated last name
+                  example: Dat
+                dateOfBirth:
+                  type: string
+                  format: date
+                  description: Updated date of birth
+                  example: 1970-12-31
+                phoneNumber:
+                  type: string
+                  description: Updated phone number
+                  example: 800-555-0100
       responses:
         '200':
           description: Successful operation
@@ -163,19 +162,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Date of birth must be in format YYYY-MM-DD
-                required:
-                  - error
+                $ref: '#/components/schemas/ErrorMessage'
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '500':
           description: Internal server error
 
-  /user/get:
+  /users/{username}:
     get:
       summary: Get user information
       description: Get all fields for user
@@ -183,7 +176,7 @@ paths:
         - users
       parameters:
         - name: username
-          in: query
+          in: path
           required: true
           schema:
             type: string
@@ -202,43 +195,42 @@ paths:
         '500':
           description: Internal server error
 
-  /content/post:
+  /posts:
     post:
       summary: Create a new post
       description: Creates a new post for a user
       tags:
         - content
-      parameters:
-        - name: jwt
-          required: true
-          in: query
-          schema:
-            type: string
-            example: example.jwt.token
-        - name: title
-          required: true
-          in: query
-          schema:
-            type: string
-            example: Example post title
-        - name: content
-          required: true
-          in: query
-          schema:
-            type: string
-            example: Example post content
-        - name: is_private
-          in: query
-          description: Is post private
-          schema:
-            type: boolean
-            example: false
-        - name: tags
-          in: query
-          description: Comma-separated list of Tags
-          schema:
-            type: string
-            example: work,Golang
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Title of the post
+                  example: Example post title
+                content:
+                  type: string
+                  description: Content of the post
+                  example: Example post content
+                isPrivate:
+                  type: boolean
+                  description: Is post private
+                  example: false
+                tags:
+                  type: array
+                  description: List of tags
+                  items:
+                    type: string
+                  example:
+                    - work
+                    - Golang
+              required:
+                - title
+                - content
       responses:
         '201':
           description: Post was successfully created
@@ -251,19 +243,55 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Post title can't be longer than 100 symbols
-                required:
-                  - error
+                $ref: '#/components/schemas/ErrorMessage'
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '500':
           description: Internal server error
 
-  /content/get:
+    get:
+      summary: Get a page of post list
+      description: Get a list of available posts on a specific page
+      tags:
+        - content
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalPages:
+                    type: integer
+                    description: The total number of pages available
+                    example: 3
+                  posts:
+                    type: array
+                    items:
+                      type: integer
+                      example: 1
+                    description: List of available posts IDs for the current page
+                required:
+                  - totalPages
+                  - posts
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication has failed
+        '404':
+          description: Page not found
+        '500':
+          description: Internal server error
+
+  /posts/{postId}:
     get:
       summary: Get post content
       tags:
@@ -272,16 +300,10 @@ paths:
         - name: postId
           description: Post ID
           required: true
-          in: query
+          in: path
           schema:
             type: integer
             example: 1
-        - name: jwt
-          description: JWT token for user, required for a private post
-          in: query
-          schema:
-            type: string
-            example: example.jwt.token
       responses:
         '200':
           description: Success
@@ -292,55 +314,47 @@ paths:
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT if given
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-  /content/update:
     put:
       summary: Update a post
       description: Updates an existing post
       tags:
         - content
       parameters:
-        - name: jwt
-          required: true
-          in: query
-          schema:
-            type: string
-            example: example.jwt.token
         - name: postId
+          in: path
           required: true
-          in: query
           schema:
             type: integer
-            example: 1
-        - name: title
-          required: true
-          in: query
-          schema:
-            type: string
-            example: Updated post title
-        - name: content
-          required: true
-          in: query
-          schema:
-            type: string
-            example: Updatred post content
-        - name: is_private
-          in: query
-          description: Is post private
-          schema:
-            type: boolean
-            example: true
-        - name: tags
-          in: query
-          description: Comma-separated list of total_pagesags
-          schema:
-            type: string
-            example: work,update
+          description: The ID of the post to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Updated post title
+                content:
+                  type: string
+                  example: Updated post content
+                isPrivate:
+                  type: boolean
+                  description: Is the post private
+                  example: true
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: List of tags
+                  example: ["work", "update"]
 
       responses:
         '200':
@@ -354,187 +368,109 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Post title can't be longer than 100 symbols
-                required:
-                  - error
+                $ref: '#/components/schemas/ErrorMessage'
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '500':
           description: Internal server error
 
-  /content/delete:
     delete:
       summary: Delete a post
       description: Deletes a specific post
       tags:
         - content
       parameters:
-        - name: jwt
-          in: query
-          required: true
-          schema:
-            type: string
-            example: example.jwt.token
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
           description: The ID of the post to delete
       responses:
-        '200':
+        '204':
           description: Post successfully deleted
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access to delete the post
         '500':
           description: Internal server error
 
-  /content/list:
-    get:
-      summary: Get a page of post list
-      description: Get a list of available posts on a specific page
-      tags:
-        - content
-      parameters:
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
-        - name: page
-          in: query
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  page:
-                    type: integer
-                    description: The current page number
-                    example: 1
-                  totalPages:
-                    type: integer
-                    description: The total number of pages available
-                    example: 3
-                  posts:
-                    type: array
-                    items:
-                      type: integer
-                      example: 1
-                    description: List of available posts IDs for the current page
-                required:
-                  - page
-                  - totalPages
-                  - posts
-        '400':
-          description: Invalid request
-        '401':
-          description: Invalid JWT
-        '404':
-          description: Page not found
-        '500':
-          description: Internal server error
-
-  /like:
+  /posts/{postId}/likes:
     post:
       summary: Like a post
       description: Leave a like under the post
       tags:
         - interactions
       parameters:
-        - name: jwt
-          in: query
-          required: true
-          schema:
-            type: string
-            example: example.jwt.token
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
+          description: The ID of the post to like
       responses:
         '200':
           description: Post successfully liked
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
-          description: Post not found or no access to like the post
+          description: Post not found or no access
         '500':
           description: Internal server error
 
-  /comment/post:
+  /posts/{postId}/comments:
     post:
       summary: Leave a comment
       description: Leave a comment under the post
       tags:
         - interactions
       parameters:
-        - name: jwt
-          in: query
-          required: true
-          schema:
-            type: string
-            example: example.jwt.token
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
-        - name: text
-          in: query
-          required: true
-          schema:
-            type: string
-            example: Example comment under the post
+          description: The ID of the post to leave a comment under
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  example: Example comment under the post
+              required:
+                - text
       responses:
-        '200':
+        '201':
           description: Success
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-  /comment/list:
     get:
       summary: Get a page of comments list
       description: Get a page of the comments list for specific post
       tags:
         - interactions
       parameters:
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
@@ -553,10 +489,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  page:
-                    type: integer
-                    description: The current page number
-                    example: 1
                   totalPages:
                     type: integer
                     description: The total number of pages available
@@ -568,19 +500,18 @@ paths:
                       example: Example comment under the post
                     description: List of Comments
                 required:
-                  - page
                   - totalPages
                   - comments
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access or page not found
         '500':
           description: Internal server error
 
-  /stats/post:
+  /posts/{postId}/stats:
     get:
       summary: Statistics for the post
       description: Number of views, likes and comments for the post
@@ -588,17 +519,11 @@ paths:
         - statistics
       parameters:
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
       responses:
         '200':
           description: Success
@@ -609,10 +534,13 @@ paths:
                 properties:
                   views:
                     type: integer
+                    example: 10
                   likes:
                     type: integer
+                    example: 2
                   comments:
                     type: integer
+                    example: 1
                 required:
                   - views
                   - likes
@@ -620,13 +548,13 @@ paths:
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-  /stats/daily/views:
+  /posts/{postId}/stats/views:
     get:
       summary: Post views by day
       description: Get post viewcount by day
@@ -634,17 +562,11 @@ paths:
         - statistics
       parameters:
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
       responses:
         '200':
           description: Success
@@ -665,13 +587,13 @@ paths:
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-  /stats/daily/likes:
+  /posts/{postId}/stats/likes:
     get:
       summary: Post likes by day
       description: Get post likecount by day
@@ -679,17 +601,11 @@ paths:
         - statistics
       parameters:
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
       responses:
         '200':
           description: Success
@@ -710,13 +626,13 @@ paths:
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-  /stats/daily/comments:
+  /posts/{postId}/stats/comments:
     get:
       summary: Post comments by day
       description: Get post commentcount by day
@@ -724,17 +640,11 @@ paths:
         - statistics
       parameters:
         - name: postId
-          in: query
+          in: path
           required: true
           schema:
             type: integer
             example: 1
-        - name: jwt
-          in: query
-          required: false
-          schema:
-            type: string
-            example: example.jwt.token
       responses:
         '200':
           description: Success
@@ -749,20 +659,26 @@ paths:
                       type: string
                       format: date
                       example: 2025-04-30
-                    comments:
+                    likes:
                       type: integer
                       example: 10
         '400':
           description: Invalid request
         '401':
-          description: Invalid JWT
+          description: Authentication has failed
         '404':
           description: Post not found or no access
         '500':
           description: Internal server error
 
-
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme. Enter 'Bearer [token]'
+
   schemas:
     Profile:
       type: object
@@ -772,6 +688,7 @@ components:
           example: Alex
         email:
           type: string
+          format: email
           example: alex@example.com
         firstName:
           type: string
@@ -799,7 +716,7 @@ components:
     PostInfo:
       type: object
       properties:
-        post_id:
+        postId:
           type: integer
           format: uint32
           description: Post ID
@@ -812,15 +729,15 @@ components:
         author:
           type: string
           description: Post author username
-        created_at:
+        createdAt:
           type: string
           format: date-time
           description: Timestamp of post creation
-        last_edited_at:
+        lastEditedAt:
           type: string
           format: date-time
           description: Timestamp of last post edit
-        is_private:
+        isPrivate:
           type: boolean
           description: Is post private
         tags:
@@ -829,3 +746,12 @@ components:
           items:
             type: string
           example: ["work", "Golang"]
+
+    ErrorMessage:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Example error message
+      required:
+        - error
