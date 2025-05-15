@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func SanitizePhone(phone string) (bool, string) {
@@ -63,9 +64,21 @@ func (s Server) PatchUsers(w http.ResponseWriter, r *http.Request) {
 		req.PhoneNumber = &sanitized
 	}
 
+	updates := User{
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		PhoneNumber:  req.PhoneNumber,
+		LastEditedAt: time.Now(),
+	}
+	if req.Email != nil {
+		updates.Email = string(*req.Email)
+	}
+	if req.DateOfBirth != nil {
+		updates.DateOfBirth = &req.DateOfBirth.Time
+	}
 	err = DB.Model(&User{}).
 		Where("username = ?", user).
-		Updates(req).Error
+		Updates(updates).Error
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("Error updating user: %v", err)

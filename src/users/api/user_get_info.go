@@ -18,7 +18,7 @@ func (s Server) GetUsersUsername(w http.ResponseWriter, r *http.Request, usernam
 
 	var info User
 	err := DB.Model(&User{}).
-		Select("email, first_name, last_name, date_of_birth, phone_number, created_at, last_edited_at").
+		Select("username, email, first_name, last_name, date_of_birth, phone_number, created_at, last_edited_at").
 		Where("username = ?", username).
 		Take(&info).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -32,7 +32,10 @@ func (s Server) GetUsersUsername(w http.ResponseWriter, r *http.Request, usernam
 
 	createdAt := int(info.CreatedAt.Unix())
 	lastEditedAt := int(info.LastEditedAt.Unix())
-	dateOfBirth := openapi_types.Date{Time: *info.DateOfBirth}
+	var dateOfBirth *openapi_types.Date
+	if info.DateOfBirth != nil {
+		dateOfBirth = &openapi_types.Date{Time: *info.DateOfBirth}
+	}
 	ans := Profile{
 		Username:     info.Username,
 		Email:        openapi_types.Email(info.Email),
@@ -40,7 +43,7 @@ func (s Server) GetUsersUsername(w http.ResponseWriter, r *http.Request, usernam
 		LastEditedAt: &lastEditedAt,
 		FirstName:    info.FirstName,
 		LastName:     info.LastName,
-		DateOfBirth:  &dateOfBirth,
+		DateOfBirth:  dateOfBirth,
 		PhoneNumber:  info.PhoneNumber,
 	}
 

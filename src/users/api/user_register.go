@@ -80,6 +80,10 @@ func (s Server) PostUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, passwordBadReason, http.StatusBadRequest)
 		return
 	}
+	if req.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
 
 	hashedPassword := HashPassword(req.Username, req.Password)
 	t := time.Now()
