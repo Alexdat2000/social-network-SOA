@@ -1,16 +1,18 @@
 services:
-#  gateway:
-#    build:
-#      context: src/gateway
-#      target: runtime
-#    command: [ "--listen", ":8080", "--users", "http://users:8080", "--content", "content:50051" ]
-#    ports:
-#      - "8080:8080"
-#
-#  gateway_tests:
-#    build:
-#      context: src/gateway
-#      target: test
+  gateway:
+    build:
+      context: src/gateway
+      target: runtime
+    command: [ "--listen", ":8080", "--users", "http://users:8080", "--content", "content:50051" ]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - users
+
+  gateway_tests:
+    build:
+      context: src/gateway
+      target: test
 
   users:
     build:
