@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "soa/content_grpc";
 
@@ -10,10 +11,10 @@ service Content {
   rpc Get(UserPostRequest) returns (PostInfo) {}
   rpc Post(PostRequest) returns (PostInfo) {}
   rpc Put(PutRequest) returns (PostInfo) {}
-  rpc Delete(UserPostRequest) returns (BoolResult) {}
+  rpc Delete(UserPostRequest) returns (google.protobuf.Empty) {}
   rpc GetPosts(GetPostsRequest) returns (PostsInfo) {}
-  rpc LikePost(UserPostRequest) returns (BoolResult) {}
-  rpc PostComment(PostCommentRequest) returns (BoolResult) {}
+  rpc LikePost(UserPostRequest) returns (google.protobuf.Empty) {}
+  rpc PostComment(PostCommentRequest) returns (google.protobuf.Empty) {}
 }
 
 message UserPostRequest {
@@ -49,18 +50,13 @@ message PostInfo {
   repeated string tags = 8;
 }
 
-message BoolResult {
-  bool successful = 1;
-}
-
 message GetPostsRequest {
   uint32 page = 1;
 }
 
 message PostsInfo {
-  uint32 page = 1;
-  uint32 total_pages = 2;
-  repeated uint32 postIds = 3 [packed=true];
+  uint32 total_pages = 1;
+  repeated uint32 post_ids = 2 [packed=true];
 }
 
 message PostCommentRequest {
