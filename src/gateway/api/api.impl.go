@@ -1,3 +1,7 @@
 package api
 
-type Server struct{}
+import "soa/gateway/content_grpc"
+
+type Server struct {
+	ContentAPI content_grpc.ContentClient
+}

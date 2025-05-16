@@ -10,13 +10,13 @@ import (
 
 func (s Server) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
 	var req PostUsersLoginJSONBody
-
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
 	if len(req.Username) > 32 || len(req.Password) > 32 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
