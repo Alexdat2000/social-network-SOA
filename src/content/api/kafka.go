@@ -36,14 +36,12 @@ func reportToKafka(kaf *kafka.Producer, topic string, value []byte) error {
 	return m.TopicPartition.Error
 }
 
-type GetEvent struct {
-	Username  string `json:"username"`
-	PostId    uint32 `json:"post_id"`
-	Timestamp string `json:"timestamp"`
-}
-
 func ReportGenericEventToKafka(kaf *kafka.Producer, topic, user string, postId uint32) error {
-	msg, _ := json.Marshal(GetEvent{user, postId, time.Now().Format(time.RFC3339)})
+	msg, _ := json.Marshal(map[string]interface{}{
+		"username":  user,
+		"post_id":   postId,
+		"timestamp": time.Now().Format(time.RFC3339),
+	})
 	err := reportToKafka(kaf, topic, msg)
 	if err != nil {
 		log.Printf("Error reporting GET to kafka: %v", err)
