@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
@@ -14,8 +15,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func ClearTable() {
-	dsn := "host=localhost port=5432 user=postgres password=postgres dbname=users sslmode=disable"
+func ClearTable(port int, dbname, tablename string) {
+	dsn := fmt.Sprintf("host=localhost port=%d user=postgres password=postgres dbname=%s sslmode=disable", port, dbname)
 
 	// Open database connection
 	db, err := sql.Open("postgres", dsn)
@@ -30,7 +31,7 @@ func ClearTable() {
 	}
 
 	// Truncate the users table, reset identity, cascade to dependent tables
-	_, err = db.Exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
+	_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", tablename))
 	if err != nil {
 		log.Fatalf("failed to truncate users table: %v", err)
 	}
@@ -67,7 +68,9 @@ func SendRequest(url, method, jwt, body string) (int, string) {
 }
 
 func TestRegistration(t *testing.T) {
-	ClearTable()
+	ClearTable(5432, "users", "users")
+	ClearTable(5433, "content", "entries")
+	ClearTable(5433, "content", "comments")
 
 	// Trying logging into non-existent user: error
 	status, resp := SendRequest("/users/login", "POST", "", `{
