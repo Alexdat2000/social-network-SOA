@@ -554,46 +554,7 @@ paths:
         '500':
           description: Internal server error
 
-  /posts/{postId}/stats/views:
-    get:
-      summary: Post views by day
-      description: Get post viewcount by day
-      tags:
-        - statistics
-      parameters:
-        - name: postId
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    day:
-                      type: string
-                      format: date
-                      example: 2025-04-30
-                    views:
-                      type: integer
-                      example: 10
-        '400':
-          description: Invalid request
-        '401':
-          description: Authentication has failed
-        '404':
-          description: Post not found or no access
-        '500':
-          description: Internal server error
-
-  /posts/{postId}/stats/likes:
+  /posts/{postId}/stats/daily:
     get:
       summary: Post likes by day
       description: Get post likecount by day
@@ -606,6 +567,16 @@ paths:
           schema:
             type: integer
             example: 1
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - views
+              - likes
+              - comments
+            example: views
       responses:
         '200':
           description: Success
@@ -620,9 +591,20 @@ paths:
                       type: string
                       format: date
                       example: 2025-04-30
-                    likes:
+                    count:
                       type: integer
                       example: 10
+                  example:
+                    [
+                      {
+                        "day": "2025-04-29",
+                        "count": 5
+                      },
+                      {
+                        "day": "2025-04-30",
+                        "count": 6
+                      },
+                    ]
         '400':
           description: Invalid request
         '401':
@@ -632,19 +614,23 @@ paths:
         '500':
           description: Internal server error
 
-  /posts/{postId}/stats/comments:
+  /posts/top10:
     get:
-      summary: Post comments by day
-      description: Get post commentcount by day
+      summary: Top-10 posts by some metric
+      description: Get top-10 posts by views, likes or comments
       tags:
         - statistics
       parameters:
-        - name: postId
-          in: path
+        - name: metric
+          in: query
           required: true
           schema:
-            type: integer
-            example: 1
+            type: string
+            enum:
+              - views
+              - likes
+              - comments
+            example: views
       responses:
         '200':
           description: Success
@@ -653,21 +639,46 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    day:
-                      type: string
-                      format: date
-                      example: 2025-04-30
-                    likes:
-                      type: integer
-                      example: 10
+                  type: integer
+                example: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         '400':
           description: Invalid request
         '401':
           description: Authentication has failed
-        '404':
-          description: Post not found or no access
+        '500':
+          description: Internal server error
+
+  /users/top10:
+    get:
+      summary: Top-10 users by some metric
+      description: Get top-10 posts by views, likes or comments
+      tags:
+        - statistics
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - views
+              - likes
+              - comments
+            example: views
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                example: ["Alex2", "Alex", "Steve", "User"]
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication has failed
         '500':
           description: Internal server error
 

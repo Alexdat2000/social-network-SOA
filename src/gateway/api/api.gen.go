@@ -18,6 +18,27 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
+// Defines values for GetPostsTop10ParamsMetric.
+const (
+	GetPostsTop10ParamsMetricComments GetPostsTop10ParamsMetric = "comments"
+	GetPostsTop10ParamsMetricLikes    GetPostsTop10ParamsMetric = "likes"
+	GetPostsTop10ParamsMetricViews    GetPostsTop10ParamsMetric = "views"
+)
+
+// Defines values for GetPostsPostIdStatsDailyParamsMetric.
+const (
+	GetPostsPostIdStatsDailyParamsMetricComments GetPostsPostIdStatsDailyParamsMetric = "comments"
+	GetPostsPostIdStatsDailyParamsMetricLikes    GetPostsPostIdStatsDailyParamsMetric = "likes"
+	GetPostsPostIdStatsDailyParamsMetricViews    GetPostsPostIdStatsDailyParamsMetric = "views"
+)
+
+// Defines values for GetUsersTop10ParamsMetric.
+const (
+	Comments GetUsersTop10ParamsMetric = "comments"
+	Likes    GetUsersTop10ParamsMetric = "likes"
+	Views    GetUsersTop10ParamsMetric = "views"
+)
+
 // ErrorMessage defines model for ErrorMessage.
 type ErrorMessage struct {
 	Error string `json:"error"`
@@ -82,6 +103,14 @@ type PostPostsJSONBody struct {
 	Title string `json:"title"`
 }
 
+// GetPostsTop10Params defines parameters for GetPostsTop10.
+type GetPostsTop10Params struct {
+	Metric GetPostsTop10ParamsMetric `form:"metric" json:"metric"`
+}
+
+// GetPostsTop10ParamsMetric defines parameters for GetPostsTop10.
+type GetPostsTop10ParamsMetric string
+
 // PutPostsPostIdJSONBody defines parameters for PutPostsPostId.
 type PutPostsPostIdJSONBody struct {
 	Content *string `json:"content,omitempty"`
@@ -103,6 +132,14 @@ type GetPostsPostIdCommentsParams struct {
 type PostPostsPostIdCommentsJSONBody struct {
 	Text string `json:"text"`
 }
+
+// GetPostsPostIdStatsDailyParams defines parameters for GetPostsPostIdStatsDaily.
+type GetPostsPostIdStatsDailyParams struct {
+	Metric GetPostsPostIdStatsDailyParamsMetric `form:"metric" json:"metric"`
+}
+
+// GetPostsPostIdStatsDailyParamsMetric defines parameters for GetPostsPostIdStatsDaily.
+type GetPostsPostIdStatsDailyParamsMetric string
 
 // PatchUsersJSONBody defines parameters for PatchUsers.
 type PatchUsersJSONBody struct {
@@ -135,6 +172,14 @@ type PostUsersLoginJSONBody struct {
 	Username string `json:"username"`
 }
 
+// GetUsersTop10Params defines parameters for GetUsersTop10.
+type GetUsersTop10Params struct {
+	Metric GetUsersTop10ParamsMetric `form:"metric" json:"metric"`
+}
+
+// GetUsersTop10ParamsMetric defines parameters for GetUsersTop10.
+type GetUsersTop10ParamsMetric string
+
 // PostPostsJSONRequestBody defines body for PostPosts for application/json ContentType.
 type PostPostsJSONRequestBody PostPostsJSONBody
 
@@ -161,6 +206,9 @@ type ServerInterface interface {
 	// Create a new post
 	// (POST /posts)
 	PostPosts(w http.ResponseWriter, r *http.Request)
+	// Top-10 posts by some metric
+	// (GET /posts/top10)
+	GetPostsTop10(w http.ResponseWriter, r *http.Request, params GetPostsTop10Params)
 	// Delete a post
 	// (DELETE /posts/{postId})
 	DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId int)
@@ -182,15 +230,9 @@ type ServerInterface interface {
 	// Statistics for the post
 	// (GET /posts/{postId}/stats)
 	GetPostsPostIdStats(w http.ResponseWriter, r *http.Request, postId int)
-	// Post comments by day
-	// (GET /posts/{postId}/stats/comments)
-	GetPostsPostIdStatsComments(w http.ResponseWriter, r *http.Request, postId int)
 	// Post likes by day
-	// (GET /posts/{postId}/stats/likes)
-	GetPostsPostIdStatsLikes(w http.ResponseWriter, r *http.Request, postId int)
-	// Post views by day
-	// (GET /posts/{postId}/stats/views)
-	GetPostsPostIdStatsViews(w http.ResponseWriter, r *http.Request, postId int)
+	// (GET /posts/{postId}/stats/daily)
+	GetPostsPostIdStatsDaily(w http.ResponseWriter, r *http.Request, postId int, params GetPostsPostIdStatsDailyParams)
 	// Update user information
 	// (PATCH /users)
 	PatchUsers(w http.ResponseWriter, r *http.Request)
@@ -200,6 +242,9 @@ type ServerInterface interface {
 	// Get JWT token for user
 	// (POST /users/login)
 	PostUsersLogin(w http.ResponseWriter, r *http.Request)
+	// Top-10 users by some metric
+	// (GET /users/top10)
+	GetUsersTop10(w http.ResponseWriter, r *http.Request, params GetUsersTop10Params)
 	// Get user information
 	// (GET /users/{username})
 	GetUsersUsername(w http.ResponseWriter, r *http.Request, username string)
@@ -218,6 +263,12 @@ func (_ Unimplemented) GetPosts(w http.ResponseWriter, r *http.Request, params G
 // Create a new post
 // (POST /posts)
 func (_ Unimplemented) PostPosts(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Top-10 posts by some metric
+// (GET /posts/top10)
+func (_ Unimplemented) GetPostsTop10(w http.ResponseWriter, r *http.Request, params GetPostsTop10Params) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -263,21 +314,9 @@ func (_ Unimplemented) GetPostsPostIdStats(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Post comments by day
-// (GET /posts/{postId}/stats/comments)
-func (_ Unimplemented) GetPostsPostIdStatsComments(w http.ResponseWriter, r *http.Request, postId int) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 // Post likes by day
-// (GET /posts/{postId}/stats/likes)
-func (_ Unimplemented) GetPostsPostIdStatsLikes(w http.ResponseWriter, r *http.Request, postId int) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Post views by day
-// (GET /posts/{postId}/stats/views)
-func (_ Unimplemented) GetPostsPostIdStatsViews(w http.ResponseWriter, r *http.Request, postId int) {
+// (GET /posts/{postId}/stats/daily)
+func (_ Unimplemented) GetPostsPostIdStatsDaily(w http.ResponseWriter, r *http.Request, postId int, params GetPostsPostIdStatsDailyParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -296,6 +335,12 @@ func (_ Unimplemented) PostUsers(w http.ResponseWriter, r *http.Request) {
 // Get JWT token for user
 // (POST /users/login)
 func (_ Unimplemented) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Top-10 users by some metric
+// (GET /users/top10)
+func (_ Unimplemented) GetUsersTop10(w http.ResponseWriter, r *http.Request, params GetUsersTop10Params) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -365,6 +410,46 @@ func (siw *ServerInterfaceWrapper) PostPosts(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostPosts(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPostsTop10 operation middleware
+func (siw *ServerInterfaceWrapper) GetPostsTop10(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPostsTop10Params
+
+	// ------------- Required query parameter "metric" -------------
+
+	if paramValue := r.URL.Query().Get("metric"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "metric"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "metric", r.URL.Query(), &params.Metric)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metric", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPostsTop10(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -609,8 +694,8 @@ func (siw *ServerInterfaceWrapper) GetPostsPostIdStats(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
-// GetPostsPostIdStatsComments operation middleware
-func (siw *ServerInterfaceWrapper) GetPostsPostIdStatsComments(w http.ResponseWriter, r *http.Request) {
+// GetPostsPostIdStatsDaily operation middleware
+func (siw *ServerInterfaceWrapper) GetPostsPostIdStatsDaily(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -629,70 +714,26 @@ func (siw *ServerInterfaceWrapper) GetPostsPostIdStatsComments(w http.ResponseWr
 
 	r = r.WithContext(ctx)
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPostsPostIdStatsComments(w, r, postId)
-	}))
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPostsPostIdStatsDailyParams
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
+	// ------------- Required query parameter "metric" -------------
 
-	handler.ServeHTTP(w, r)
-}
+	if paramValue := r.URL.Query().Get("metric"); paramValue != "" {
 
-// GetPostsPostIdStatsLikes operation middleware
-func (siw *ServerInterfaceWrapper) GetPostsPostIdStatsLikes(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "postId" -------------
-	var postId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "postId", chi.URLParam(r, "postId"), &postId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "postId", Err: err})
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "metric"})
 		return
 	}
 
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPostsPostIdStatsLikes(w, r, postId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetPostsPostIdStatsViews operation middleware
-func (siw *ServerInterfaceWrapper) GetPostsPostIdStatsViews(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "postId" -------------
-	var postId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "postId", chi.URLParam(r, "postId"), &postId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindQueryParameter("form", true, true, "metric", r.URL.Query(), &params.Metric)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "postId", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metric", Err: err})
 		return
 	}
 
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPostsPostIdStatsViews(w, r, postId)
+		siw.Handler.GetPostsPostIdStatsDaily(w, r, postId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -741,6 +782,46 @@ func (siw *ServerInterfaceWrapper) PostUsersLogin(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostUsersLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUsersTop10 operation middleware
+func (siw *ServerInterfaceWrapper) GetUsersTop10(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUsersTop10Params
+
+	// ------------- Required query parameter "metric" -------------
+
+	if paramValue := r.URL.Query().Get("metric"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "metric"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "metric", r.URL.Query(), &params.Metric)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metric", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUsersTop10(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -901,6 +982,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/posts", wrapper.PostPosts)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/posts/top10", wrapper.GetPostsTop10)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/posts/{postId}", wrapper.DeletePostsPostId)
 	})
 	r.Group(func(r chi.Router) {
@@ -922,13 +1006,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/posts/{postId}/stats", wrapper.GetPostsPostIdStats)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/posts/{postId}/stats/comments", wrapper.GetPostsPostIdStatsComments)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/posts/{postId}/stats/likes", wrapper.GetPostsPostIdStatsLikes)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/posts/{postId}/stats/views", wrapper.GetPostsPostIdStatsViews)
+		r.Get(options.BaseURL+"/posts/{postId}/stats/daily", wrapper.GetPostsPostIdStatsDaily)
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/users", wrapper.PatchUsers)
@@ -938,6 +1016,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/users/login", wrapper.PostUsersLogin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/top10", wrapper.GetUsersTop10)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users/{username}", wrapper.GetUsersUsername)

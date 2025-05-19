@@ -9,17 +9,17 @@ func (s Server) GetPostsPostIdStats(w http.ResponseWriter, r *http.Request, post
 	panic("implement me")
 }
 
-func (s Server) GetPostsPostIdStatsViews(w http.ResponseWriter, r *http.Request, postId int) {
+func (s Server) GetPostsPostIdStatsDaily(w http.ResponseWriter, r *http.Request, postId int, params GetPostsPostIdStatsDailyParams) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Server) GetPostsPostIdStatsLikes(w http.ResponseWriter, r *http.Request, postId int) {
+func (s Server) GetPostsTop10(w http.ResponseWriter, r *http.Request, params GetPostsTop10Params) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s Server) GetPostsPostIdStatsComments(w http.ResponseWriter, r *http.Request, postId int) {
+func (s Server) GetUsersTop10(w http.ResponseWriter, r *http.Request, params GetUsersTop10Params) {
 	//TODO implement me
 	panic("implement me")
 }

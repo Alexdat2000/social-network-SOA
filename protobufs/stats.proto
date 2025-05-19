@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option go_package = "soa/stats_grpc";
+
+package content_grpc;
+
+service Content {
+  rpc Stats(PostStatsRequest) returns (PostStats) {}
+  rpc Daily(DailyRequest) returns (DailyStats) {}
+  rpc TopPosts(TopRequest) returns (TopPostList) {}
+  rpc TopUsers(TopRequest) returns (TopUserList) {}
+}
+
+message PostStatsRequest {
+  uint32 post_id = 1;
+}
+
+message PostStats {
+  uint32 views = 1;
+  uint32 likes = 2;
+  uint32 comments = 3;
+}
+
+enum Metric {
+  VIEWS = 0;
+  LIKES = 1;
+  COMMENTS = 2;
+}
+
+message DailyRequest {
+  uint32 post_id = 1;
+  Metric metric = 2;
+}
+
+message DayStats {
+  string date = 1;
+  uint32 count = 2;
+}
+
+message DailyStats {
+  repeated DayStats stats = 1;
+}
+
+message TopRequest {
+  Metric metric = 1;
+}
+
+message PostInfo {
+  uint32 post_id = 1;
+  uint32 count = 2;
+}
+
+message TopPostList {
+  repeated PostInfo top_posts = 1;
+}
+
+message UserInfo {
+  string username = 1;
+  uint32 count = 2;
+}
+
+message TopUserList {
+  repeated UserInfo top_users = 1;
+}
