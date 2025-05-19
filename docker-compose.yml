@@ -19,15 +19,12 @@ services:
     ports:
       - "8081:8080"
     restart: always
+    env_file:
+      - common.env
     environment:
       DB_HOST: postgres_users
       DB_PORT: 5432
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-users}
-      DB_SSL_MODE: disable
-      PRIVATE_KEY: /tmp/private.pem
-      PUBLIC_KEY: /tmp/public.pem
     depends_on:
       postgres_users:
         condition: service_healthy
@@ -36,9 +33,9 @@ services:
     image: postgres:15-alpine
     container_name: postgres_users
     restart: always
+    env_file:
+      - common.env
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-users}
       PGDATA: /var/lib/postgresql/data/pgdata_users
     ports:
@@ -69,15 +66,12 @@ services:
       context: src/content
     command: [ "./content", "--port", "50051" ]
     restart: always
+    env_file:
+      - common.env
     environment:
       DB_HOST: postgres_content
       DB_PORT: 5432
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-content}
-      DB_SSL_MODE: disable
-      PRIVATE_KEY: /tmp/private.pem
-      PUBLIC_KEY: /tmp/public.pem
     depends_on:
       postgres_content:
         condition: service_healthy
@@ -88,9 +82,9 @@ services:
     image: postgres:15-alpine
     container_name: postgres_content
     restart: always
+    env_file:
+      - common.env
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-content}
       PGDATA: /var/lib/postgresql/data/pgdata_content
     ports:
@@ -123,21 +117,8 @@ services:
     ports:
       - "9092:9092"
       - "9997:9997"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9997
-      KAFKA_JMX_HOSTNAME: kafka
-      confluent.reporters.telemetry.auto.enable: "false"
-      confluent.telemetry.enabled: "false"
+    env_file:
+      - kafka.env
 
   kafka-ui:
     container_name: kafka-ui
