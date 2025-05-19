@@ -15,6 +15,7 @@ service Content {
   rpc GetPosts(GetPostsRequest) returns (PostsInfo) {}
   rpc LikePost(UserPostRequest) returns (google.protobuf.Empty) {}
   rpc PostComment(PostCommentRequest) returns (google.protobuf.Empty) {}
+  rpc GetComments(GetCommentsRequest) returns (CommentsInfo) {}
 }
 
 message UserPostRequest {
@@ -63,4 +64,21 @@ message PostCommentRequest {
   string user = 1;
   uint32 post_id = 2;
   string text = 3;
+}
+
+message GetCommentsRequest {
+  uint32 post_id = 1;
+  uint32 page = 2;
+}
+
+message CommentInfo {
+  uint32 id = 1;
+  string author = 2;
+  string text = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message CommentsInfo {
+  uint32 total_pages = 1;
+  repeated CommentInfo comments = 2;
 }

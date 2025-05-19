@@ -9,8 +9,9 @@ import (
 
 type Server struct {
 	pb.UnimplementedContentServer
-	Db    *gorm.DB
-	Kafka *kafka.Producer
+	EntriesDB  *gorm.DB
+	CommentsDB *gorm.DB
+	Kafka      *kafka.Producer
 }
 
 type Entry struct {
@@ -22,4 +23,12 @@ type Entry struct {
 	LastEditedAt time.Time `gorm:"type:timestamptz;not null;default:now();column:last_edited_at"`
 	IsPrivate    bool      `gorm:"not null;default:true;column:is_private"`
 	Tags         []string  `gorm:"type:text[];not null;default:'{}';column:tags"`
+}
+
+type Comment struct {
+	ID        int       `gorm:"primaryKey;autoIncrement;column:id"`
+	PostID    int       `gorm:"column:post_id"`
+	Author    string    `gorm:"type:varchar(32);not null;column:author"`
+	Text      string    `gorm:"type:text;not null;column:text"`
+	CreatedAt time.Time `gorm:"type:timestamp;not null;column:created_at"`
 }

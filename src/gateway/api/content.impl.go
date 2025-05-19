@@ -172,6 +172,7 @@ func (s Server) DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId
 func (s Server) GetPosts(w http.ResponseWriter, r *http.Request, params GetPostsParams) {
 	if params.Page < 0 {
 		http.Error(w, "Page is invalid", http.StatusBadRequest)
+		return
 	}
 
 	ok, _ := utils.Auth(w, r)
@@ -190,7 +191,7 @@ func (s Server) GetPosts(w http.ResponseWriter, r *http.Request, params GetPosts
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ans); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}

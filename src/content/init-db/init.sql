@@ -9,3 +9,14 @@ CREATE TABLE IF NOT EXISTS entries
     is_private     boolean     NOT NULL default true,
     tags           TEXT[]      NOT NULL DEFAULT '{}'
 );
+
+CREATE TABLE IF NOT EXISTS comments
+(
+    id         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    post_id    INT,
+    author     VARCHAR(32) NOT NULL,
+    text       TEXT        NOT NULL,
+    created_at TIMESTAMP   NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);

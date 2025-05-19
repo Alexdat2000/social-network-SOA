@@ -9,20 +9,19 @@ import (
 	"os"
 )
 
-func getDBConnectionString() string {
+func getDBConnectionString(dbname string) string {
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
 	sslmode := os.Getenv("DB_SSL_MODE")
 
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
 }
 
-func InitDB() *gorm.DB {
-	connStr := getDBConnectionString()
+func InitDB(dbname string, scheme interface{}) *gorm.DB {
+	connStr := getDBConnectionString(dbname)
 
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{TranslateError: true})
 	if err != nil {
@@ -32,10 +31,10 @@ func InitDB() *gorm.DB {
 		log.Fatal("No database connection")
 	}
 
-	err = db.AutoMigrate(&Entry{})
+	err = db.AutoMigrate(scheme)
 	if err != nil {
 		log.Fatal("failed to auto migrate:", err)
 	}
-	log.Printf("Successfully connected to the database")
+	log.Printf("Successfully connected to the database " + dbname)
 	return db
 }

@@ -77,6 +77,30 @@ func (s Server) PostPostsPostIdComments(w http.ResponseWriter, r *http.Request, 
 }
 
 func (s Server) GetPostsPostIdComments(w http.ResponseWriter, r *http.Request, postId int, params GetPostsPostIdCommentsParams) {
-	//TODO implement me
-	panic("implement me")
+	if params.Page < 0 {
+		http.Error(w, "Page is invalid", http.StatusBadRequest)
+		return
+	}
+
+	ok, _ := utils.Auth(w, r)
+	if !ok {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	ans, err := s.ContentAPI.GetComments(ctx, &pb.GetCommentsRequest{
+		PostId: uint32(postId),
+		Page:   uint32(params.Page),
+	})
+	if err != nil {
+		translateGrpcErrorToHttp(err, w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(ans); err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }

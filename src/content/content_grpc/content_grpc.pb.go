@@ -27,6 +27,7 @@ const (
 	Content_GetPosts_FullMethodName    = "/content_grpc.Content/GetPosts"
 	Content_LikePost_FullMethodName    = "/content_grpc.Content/LikePost"
 	Content_PostComment_FullMethodName = "/content_grpc.Content/PostComment"
+	Content_GetComments_FullMethodName = "/content_grpc.Content/GetComments"
 )
 
 // ContentClient is the client API for Content service.
@@ -40,6 +41,7 @@ type ContentClient interface {
 	GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*PostsInfo, error)
 	LikePost(ctx context.Context, in *UserPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	PostComment(ctx context.Context, in *PostCommentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetComments(ctx context.Context, in *GetCommentsRequest, opts ...grpc.CallOption) (*CommentsInfo, error)
 }
 
 type contentClient struct {
@@ -120,6 +122,16 @@ func (c *contentClient) PostComment(ctx context.Context, in *PostCommentRequest,
 	return out, nil
 }
 
+func (c *contentClient) GetComments(ctx context.Context, in *GetCommentsRequest, opts ...grpc.CallOption) (*CommentsInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommentsInfo)
+	err := c.cc.Invoke(ctx, Content_GetComments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServer is the server API for Content service.
 // All implementations must embed UnimplementedContentServer
 // for forward compatibility.
@@ -131,6 +143,7 @@ type ContentServer interface {
 	GetPosts(context.Context, *GetPostsRequest) (*PostsInfo, error)
 	LikePost(context.Context, *UserPostRequest) (*emptypb.Empty, error)
 	PostComment(context.Context, *PostCommentRequest) (*emptypb.Empty, error)
+	GetComments(context.Context, *GetCommentsRequest) (*CommentsInfo, error)
 	mustEmbedUnimplementedContentServer()
 }
 
@@ -161,6 +174,9 @@ func (UnimplementedContentServer) LikePost(context.Context, *UserPostRequest) (*
 }
 func (UnimplementedContentServer) PostComment(context.Context, *PostCommentRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostComment not implemented")
+}
+func (UnimplementedContentServer) GetComments(context.Context, *GetCommentsRequest) (*CommentsInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetComments not implemented")
 }
 func (UnimplementedContentServer) mustEmbedUnimplementedContentServer() {}
 func (UnimplementedContentServer) testEmbeddedByValue()                 {}
@@ -309,6 +325,24 @@ func _Content_PostComment_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Content_GetComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).GetComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_GetComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).GetComments(ctx, req.(*GetCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Content_ServiceDesc is the grpc.ServiceDesc for Content service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -343,6 +377,10 @@ var Content_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostComment",
 			Handler:    _Content_PostComment_Handler,
+		},
+		{
+			MethodName: "GetComments",
+			Handler:    _Content_GetComments_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
