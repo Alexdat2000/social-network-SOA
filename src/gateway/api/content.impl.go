@@ -51,7 +51,6 @@ func (s Server) PostPosts(w http.ResponseWriter, r *http.Request) {
 	if req.Tags != nil {
 		grpcReq.Tags = *req.Tags
 	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -89,7 +88,7 @@ func (s Server) GetPostsPostId(w http.ResponseWriter, r *http.Request, postId in
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ans); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}
@@ -98,6 +97,7 @@ func (s Server) GetPostsPostId(w http.ResponseWriter, r *http.Request, postId in
 func (s Server) PutPostsPostId(w http.ResponseWriter, r *http.Request, postId int) {
 	if !(postId >= 0 && postId <= math.MaxUint32) {
 		http.Error(w, "PostId is invalid", http.StatusNotFound)
+		return
 	}
 	ok, username := utils.Auth(w, r)
 	if !ok {
@@ -135,7 +135,7 @@ func (s Server) PutPostsPostId(w http.ResponseWriter, r *http.Request, postId in
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ans); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}
@@ -163,7 +163,7 @@ func (s Server) DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusNoContent)
 	if err := json.NewEncoder(w).Encode(ans); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}

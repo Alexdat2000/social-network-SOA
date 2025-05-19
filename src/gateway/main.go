@@ -10,7 +10,7 @@ import (
 
 func main() {
 	server := api.Server{
-		ContentAPI: pb.InitContentClient("localhost:8082"),
+		ContentAPI: pb.InitContentClient("content:50051"),
 	}
 	r := chi.NewRouter()
 

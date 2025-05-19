@@ -14,7 +14,7 @@ COPY . .
 
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o main .
 
-FROM golang:1.24-alpine AS test-runner
+FROM golang:1.24-bullseye AS test-runner
 
 WORKDIR /app
 

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,7 +23,7 @@ func (s *Server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 		log.Printf("Error when reading entry: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if entry.Author != req.GetUser() && entry.IsPrivate == true {
+	if entry.Author != req.GetUser() && *entry.IsPrivate == true {
 		return nil, status.Error(codes.PermissionDenied, "no access to this private post")
 	}
 
@@ -33,7 +34,7 @@ func (s *Server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 		Author:       entry.Author,
 		CreatedAt:    timestamppb.New(entry.CreatedAt),
 		LastEditedAt: timestamppb.New(entry.LastEditedAt),
-		IsPrivate:    entry.IsPrivate,
+		IsPrivate:    *entry.IsPrivate,
 		Tags:         entry.Tags,
 	}
 	err = ReportGenericEventToKafka(s.Kafka, "post-views", req.GetUser(), req.GetPostId())
@@ -51,8 +52,8 @@ func (s *Server) Post(ctx context.Context, req *pb.PostRequest) (*pb.PostInfo, e
 		Author:       req.GetUser(),
 		CreatedAt:    t,
 		LastEditedAt: t,
-		IsPrivate:    req.GetIsPrivate(),
-		Tags:         req.GetTags(),
+		IsPrivate:    &req.IsPrivate,
+		Tags:         pq.StringArray(req.GetTags()),
 	}
 	if err := s.DB.Create(&entry).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -69,7 +70,7 @@ func (s *Server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PostInfo, err
 		"description":    req.GetDescription(),
 		"last_edited_at": time.Now(),
 		"is_private":     req.GetIsPrivate(),
-		"tags":           req.GetTags(),
+		"tags":           pq.StringArray(req.GetTags()),
 	}
 
 	result := s.DB.Model(&Entry{}).
