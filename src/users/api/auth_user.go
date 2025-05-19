@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strings"
@@ -31,15 +32,15 @@ func extractTokenFromRequest(r *http.Request) (string, error) {
 	return token, nil
 }
 
-func auth(r *http.Request) (string, error) {
+func auth(db *gorm.DB, ah *AuthHandlers, r *http.Request) (string, error) {
 	jwt, err := extractTokenFromRequest(r)
-	name, err := ValidateToken(jwt)
+	name, err := ValidateToken(ah, jwt)
 	if err != nil {
 		return "", err
 	}
 
 	var totalCount int64
-	err = DB.Model(&User{}).
+	err = db.Model(&User{}).
 		Where("username = ?", name).
 		Count(&totalCount).Error
 	if err != nil {
@@ -51,8 +52,8 @@ func auth(r *http.Request) (string, error) {
 	return name, nil
 }
 
-func ensureAuth(w http.ResponseWriter, r *http.Request) (string, bool) {
-	name, err := auth(r)
+func ensureAuth(db *gorm.DB, ah *AuthHandlers, w http.ResponseWriter, r *http.Request) (string, bool) {
+	name, err := auth(db, ah, r)
 	if errors.Is(err, ErrNoToken) || errors.Is(err, ErrInvalidToken) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return "", false
@@ -68,7 +69,7 @@ func ensureAuth(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func (s Server) GetUsersAuth(w http.ResponseWriter, r *http.Request) {
-	name, err := auth(r)
+	name, err := auth(s.DB, s.Handlers, r)
 	if errors.Is(err, ErrNoToken) || errors.Is(err, ErrInvalidToken) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 	} else if errors.Is(err, ErrUserNotFound) {

@@ -27,7 +27,7 @@ func SanitizePhone(phone string) (bool, string) {
 }
 
 func (s Server) PatchUsers(w http.ResponseWriter, r *http.Request) {
-	user, ok := ensureAuth(w, r)
+	user, ok := ensureAuth(s.DB, s.Handlers, w, r)
 	if !ok {
 		return
 	}
@@ -76,7 +76,7 @@ func (s Server) PatchUsers(w http.ResponseWriter, r *http.Request) {
 	if req.DateOfBirth != nil {
 		updates.DateOfBirth = &req.DateOfBirth.Time
 	}
-	err = DB.Model(&User{}).
+	err = s.DB.Model(&User{}).
 		Where("username = ?", user).
 		Updates(updates).Error
 	if err != nil {

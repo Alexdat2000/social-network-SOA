@@ -27,7 +27,7 @@ func (s *Server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*em
 		Text:      req.Text,
 		CreatedAt: time.Now(),
 	}
-	if err := s.EntriesDB.Create(&entry).Error; err != nil {
+	if err := s.DB.Create(&entry).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -47,13 +47,13 @@ func (s *Server) GetComments(_ context.Context, req *pb.GetCommentsRequest) (*pb
 	}
 
 	var totalCount int64
-	if err := s.CommentsDB.Model(&Comment{}).Where("post_id = ?", req.GetPostId()).Count(&totalCount).Error; err != nil {
+	if err := s.DB.Model(&Comment{}).Where("post_id = ?", req.GetPostId()).Count(&totalCount).Error; err != nil {
 		log.Printf("Error counting comments: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	var comments []Comment
-	err := s.CommentsDB.
+	err := s.DB.
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).
 		Find(&comments).Error

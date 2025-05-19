@@ -22,11 +22,8 @@ func (s Server) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if DB == nil {
-		log.Fatalln("DB is nil")
-	}
 	var hashedPassword string
-	err = DB.Model(&User{}).
+	err = s.DB.Model(&User{}).
 		Select("hashed_password").
 		Where("username = ?", req.Username).
 		Take(&hashedPassword).Error
@@ -44,7 +41,7 @@ func (s Server) PostUsersLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := CreateToken(req.Username)
+	token, err := CreateToken(s.Handlers, req.Username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("Error when creating token: %v", err)

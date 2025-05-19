@@ -94,14 +94,14 @@ func (s Server) PostUsers(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:      t,
 		LastEditedAt:   t,
 	}
-	err = DB.Create(&user).Error
+	err = s.DB.Create(&user).Error
 	if errors.Is(err, gorm.ErrDuplicatedKey) {
 		http.Error(w, "User already exists", http.StatusBadRequest)
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Printf("Error creating user: %v", err)
 	} else {
-		token, err := CreateToken(req.Username)
+		token, err := CreateToken(s.Handlers, req.Username)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -117,7 +117,7 @@ func (s Server) PostUsers(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(jsonBytes)
-		err = ReportRegisterToKafka(req.Username, string(req.Email), t)
+		err = ReportRegisterToKafka(s.Kafka, req.Username, string(req.Email), t)
 		if err != nil {
 			log.Printf("Error while reporting register to kafka: %v", err)
 		}

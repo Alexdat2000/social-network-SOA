@@ -34,27 +34,23 @@ func getDBConnectionString() string {
 		host, port, user, password, dbname, sslmode)
 }
 
-var DB *gorm.DB
-
-func connectToDB() {
+func InitDB() *gorm.DB {
 	connStr := getDBConnectionString()
 
-	var err error
-	DB, err = gorm.Open(postgres.Open(connStr), &gorm.Config{TranslateError: true})
+	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{TranslateError: true})
 	if err != nil {
 		log.Fatal("failed to connect database:", err)
 	}
-	if DB == nil {
+	if db == nil {
 		log.Fatal("No database connection")
 	}
 
-	err = DB.AutoMigrate(&User{})
+	err = db.AutoMigrate(&User{})
 	if err != nil {
 		log.Fatal("failed to auto migrate:", err)
+		return nil
+	} else {
+		log.Println("Successfully connected to the database!")
+		return db
 	}
-}
-
-func InitDB() {
-	connectToDB()
-	log.Println("Successfully connected to the database!")
 }

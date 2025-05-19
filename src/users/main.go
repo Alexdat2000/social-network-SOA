@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	api.InitDB()
-	api.InitAuthHandler()
-	api.ConnectToKafka()
-
-	server := api.Server{}
+	server := api.Server{
+		DB:       api.InitDB(),
+		Kafka:    api.InitKafka(),
+		Handlers: api.InitAuthHandlers(),
+	}
 	r := chi.NewRouter()
 
 	handler := api.HandlerFromMux(server, r)

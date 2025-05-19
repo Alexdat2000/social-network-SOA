@@ -15,7 +15,7 @@ import (
 
 func (s *Server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, error) {
 	var entry Entry
-	err := s.EntriesDB.Where("id = ?", req.GetPostId()).First(&entry).Error
+	err := s.DB.Where("id = ?", req.GetPostId()).First(&entry).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Errorf(codes.NotFound, "post not found")
 	} else if err != nil {
@@ -54,7 +54,7 @@ func (s *Server) Post(ctx context.Context, req *pb.PostRequest) (*pb.PostInfo, e
 		IsPrivate:    req.GetIsPrivate(),
 		Tags:         req.GetTags(),
 	}
-	if err := s.EntriesDB.Create(&entry).Error; err != nil {
+	if err := s.DB.Create(&entry).Error; err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return s.Get(ctx, &pb.UserPostRequest{
@@ -72,7 +72,7 @@ func (s *Server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PostInfo, err
 		"tags":           req.GetTags(),
 	}
 
-	result := s.EntriesDB.Model(&Entry{}).
+	result := s.DB.Model(&Entry{}).
 		Where("id = ? AND author = ?", req.GetPostId(), req.GetUser()).
 		Updates(updates)
 	if result.Error != nil {
@@ -88,7 +88,7 @@ func (s *Server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PostInfo, err
 }
 
 func (s *Server) Delete(_ context.Context, req *pb.UserPostRequest) (*emptypb.Empty, error) {
-	result := s.EntriesDB.Where("id = ? AND author = ?", req.GetPostId(), req.GetUser()).Delete(&Entry{})
+	result := s.DB.Where("id = ? AND author = ?", req.GetPostId(), req.GetUser()).Delete(&Entry{})
 	if result.Error != nil {
 		log.Printf("Error when deleting entry: %v", result.Error)
 		return nil, status.Error(codes.Internal, result.Error.Error())
@@ -108,13 +108,13 @@ func (s *Server) GetPosts(_ context.Context, req *pb.GetPostsRequest) (*pb.Posts
 	}
 
 	var totalCount int64
-	if err := s.EntriesDB.Model(&Entry{}).Count(&totalCount).Error; err != nil {
+	if err := s.DB.Model(&Entry{}).Count(&totalCount).Error; err != nil {
 		log.Printf("Error counting entries: %v", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	var entries []Entry
-	err := s.EntriesDB.Select("id").
+	err := s.DB.Select("id").
 		Order("id").
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).

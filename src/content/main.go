@@ -16,9 +16,8 @@ func main() {
 
 	s := grpc.NewServer()
 	pb.RegisterContentServer(s, &api.Server{
-		EntriesDB:  api.InitDB("entries", &api.Entry{}),
-		CommentsDB: api.InitDB("comments", &api.Comment{}),
-		Kafka:      api.InitKafka(),
+		DB:    api.InitDB(),
+		Kafka: api.InitKafka(),
 	})
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))

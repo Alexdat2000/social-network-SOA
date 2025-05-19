@@ -11,13 +11,13 @@ import (
 )
 
 func (s Server) GetUsersUsername(w http.ResponseWriter, r *http.Request, username string) {
-	_, ok := ensureAuth(w, r)
+	_, ok := ensureAuth(s.DB, s.Handlers, w, r)
 	if !ok {
 		return
 	}
 
 	var info User
-	err := DB.Model(&User{}).
+	err := s.DB.Model(&User{}).
 		Select("username, email, first_name, last_name, date_of_birth, phone_number, created_at, last_edited_at").
 		Where("username = ?", username).
 		Take(&info).Error

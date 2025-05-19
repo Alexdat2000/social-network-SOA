@@ -9,6 +9,3 @@ RUN go build .
 FROM scratch AS runtime
 COPY --from=build /src/gateway ./
 ENTRYPOINT ["./gateway"]
-
-FROM build AS test
-CMD ["go", "test", "-v", "./tests/..."]

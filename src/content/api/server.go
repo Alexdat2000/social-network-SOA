@@ -9,9 +9,8 @@ import (
 
 type Server struct {
 	pb.UnimplementedContentServer
-	EntriesDB  *gorm.DB
-	CommentsDB *gorm.DB
-	Kafka      *kafka.Producer
+	DB    *gorm.DB
+	Kafka *kafka.Producer
 }
 
 type Entry struct {
