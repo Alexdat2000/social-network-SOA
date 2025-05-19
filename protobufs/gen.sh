@@ -9,3 +9,6 @@ cp stats.pb.go ../src/gateway/stats_grpc/stats.pb.go
 cp stats.pb.go ../src/stats/stats_grpc/stats.pb.go
 cp stats_grpc.pb.go ../src/gateway/stats_grpc/stats_grpc.pb.go
 cp stats_grpc.pb.go ../src/stats/stats_grpc/stats_grpc.pb.go
+
+# shellcheck disable=SC2035
+rm *.go
