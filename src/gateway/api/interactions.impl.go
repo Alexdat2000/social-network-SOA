@@ -82,7 +82,7 @@ func (s Server) GetPostsPostIdComments(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	ok, _ := utils.Auth(w, r)
+	ok, username := utils.Auth(w, r)
 	if !ok {
 		return
 	}
@@ -91,6 +91,7 @@ func (s Server) GetPostsPostIdComments(w http.ResponseWriter, r *http.Request, p
 	defer cancel()
 
 	ans, err := s.ContentAPI.GetComments(ctx, &pb.GetCommentsRequest{
+		User:   username,
 		PostId: uint32(postId),
 		Page:   uint32(params.Page),
 	})

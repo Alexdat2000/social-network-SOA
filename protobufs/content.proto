@@ -67,8 +67,9 @@ message PostCommentRequest {
 }
 
 message GetCommentsRequest {
-  uint32 post_id = 1;
-  uint32 page = 2;
+  string user = 1;
+  uint32 post_id = 2;
+  uint32 page = 3;
 }
 
 message CommentInfo {

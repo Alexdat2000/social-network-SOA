@@ -8,7 +8,10 @@ services:
       - "8080:8080"
     depends_on:
       - users
+      - content
+      - stats
 
+  # User service
   users:
     build:
       context: src/users
@@ -49,18 +52,8 @@ services:
       timeout: 5s
       retries: 3
 
-  users_tests:
-    build:
-      context: src/users
-      target: test-runner
-    command: ["go", "test", "-v", "./..."]
-    volumes:
-      - ./credentials/private.pem:/tmp/private.pem
-      - ./credentials/public.pem:/tmp/public.pem
-    environment:
-      PRIVATE_KEY: /tmp/private.pem
-      PUBLIC_KEY: /tmp/public.pem
 
+  # Content service
   content:
     build:
       context: src/content
@@ -75,8 +68,8 @@ services:
     depends_on:
       postgres_content:
         condition: service_healthy
-      gateway:
-        condition: service_started
+      kafka:
+        condition: service_healthy
 
   postgres_content:
     image: postgres:15-alpine
@@ -120,6 +113,12 @@ services:
       - "9997:9997"
     env_file:
       - kafka.env
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "9092" ]
+      interval: 5s
+      timeout: 1s
+      retries: 10
+      start_period: 5s
 
   kafka-ui:
     container_name: kafka-ui
@@ -131,8 +130,42 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
 
+  # Stats service
+  stats:
+    build:
+      context: src/stats
+    command: [ "./content", "--port", "50051" ]
+    restart: always
+    depends_on:
+      clickhouse_stats:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  clickhouse_stats:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_PASSWORD=clickhouse
+    volumes:
+      - ./src/stats/clickhouse-config/users.xml:/etc/clickhouse-server/users.xml:ro
+      - ./src/stats/clickhouse-config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - clickhouse_data_stats:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query='SELECT 1'"]
+      interval: 10s
+      timeout: 3s
+      retries: 100
+      start_period: 10s
+
+
 volumes:
   pgdata_content:
     driver: local
   pgdata_users:
+    driver: local
+  clickhouse_data_stats:
     driver: local
