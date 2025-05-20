@@ -105,7 +105,7 @@ func (s *Server) GetComments(_ context.Context, req *pb.GetCommentsRequest) (*pb
 	}
 
 	return &pb.CommentsInfo{
-		TotalPages: uint32(totalCount),
+		TotalPages: uint32((totalCount + pageSize - 1) / pageSize),
 		Comments:   commentInfos,
 	}, nil
 }

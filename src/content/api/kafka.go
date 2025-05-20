@@ -38,9 +38,9 @@ func reportToKafka(kaf *kafka.Producer, topic string, value []byte) error {
 
 func ReportGenericEventToKafka(kaf *kafka.Producer, topic string, postId uint32, author string) error {
 	msg, _ := json.Marshal(map[string]interface{}{
-		"post_id":   postId,
-		"author":    author,
-		"timestamp": time.Now().Format("2006-01-02"),
+		"post_id": postId,
+		"author":  author,
+		"date":    time.Now().Format("2006-01-02"),
 	})
 	err := reportToKafka(kaf, topic, msg)
 	if err != nil {
