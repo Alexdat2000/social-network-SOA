@@ -13,28 +13,28 @@ import (
 	"time"
 )
 
-func checkPostAccess(db *gorm.DB, postId uint32, user string) error {
+func checkPostAccess(db *gorm.DB, postId uint32, user string) (string, error) {
 	var entry Entry
 	err := db.Where("id = ?", postId).First(&entry).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return status.Errorf(codes.NotFound, "post not found")
+		return "", status.Errorf(codes.NotFound, "post not found")
 	} else if err != nil {
 		log.Printf("Error when reading entry: %v", err)
-		return status.Error(codes.Internal, err.Error())
+		return "", status.Error(codes.Internal, err.Error())
 	}
 	if entry.Author != user && *entry.IsPrivate == true {
-		return status.Error(codes.PermissionDenied, "no access to this private post")
+		return "", status.Error(codes.PermissionDenied, "no access to this private post")
 	}
-	return nil
+	return entry.Author, nil
 }
 
 func (s *Server) LikePost(_ context.Context, req *pb.UserPostRequest) (*emptypb.Empty, error) {
-	err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
+	author, err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
 	if err != nil {
 		return nil, err
 	}
 
-	err = ReportGenericEventToKafka(s.Kafka, "post-likes", req.GetUser(), req.GetPostId())
+	err = ReportGenericEventToKafka(s.Kafka, "post-likes", req.GetPostId(), author)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	} else {
@@ -43,7 +43,7 @@ func (s *Server) LikePost(_ context.Context, req *pb.UserPostRequest) (*emptypb.
 }
 
 func (s *Server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*emptypb.Empty, error) {
-	err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
+	author, err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *Server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*em
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	err = ReportGenericEventToKafka(s.Kafka, "post-comments", req.GetUser(), req.GetPostId())
+	err = ReportGenericEventToKafka(s.Kafka, "post-comments", req.GetPostId(), author)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	} else {
@@ -67,7 +67,7 @@ func (s *Server) PostComment(_ context.Context, req *pb.PostCommentRequest) (*em
 }
 
 func (s *Server) GetComments(_ context.Context, req *pb.GetCommentsRequest) (*pb.CommentsInfo, error) {
-	err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
+	_, err := checkPostAccess(s.DB, req.GetPostId(), req.GetUser())
 	if err != nil {
 		return nil, err
 	}

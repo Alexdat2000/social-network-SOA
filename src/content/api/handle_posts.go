@@ -37,7 +37,7 @@ func (s *Server) Get(_ context.Context, req *pb.UserPostRequest) (*pb.PostInfo, 
 		IsPrivate:    *entry.IsPrivate,
 		Tags:         entry.Tags,
 	}
-	err = ReportGenericEventToKafka(s.Kafka, "post-views", req.GetUser(), req.GetPostId())
+	err = ReportGenericEventToKafka(s.Kafka, "post-views", req.GetPostId(), entry.Author)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

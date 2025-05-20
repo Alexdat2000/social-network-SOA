@@ -36,11 +36,11 @@ func reportToKafka(kaf *kafka.Producer, topic string, value []byte) error {
 	return m.TopicPartition.Error
 }
 
-func ReportGenericEventToKafka(kaf *kafka.Producer, topic, user string, postId uint32) error {
+func ReportGenericEventToKafka(kaf *kafka.Producer, topic string, postId uint32, author string) error {
 	msg, _ := json.Marshal(map[string]interface{}{
-		"username":  user,
 		"post_id":   postId,
-		"timestamp": time.Now().Format(time.RFC3339),
+		"author":    author,
+		"timestamp": time.Now().Format("2006-01-02"),
 	})
 	err := reportToKafka(kaf, topic, msg)
 	if err != nil {
