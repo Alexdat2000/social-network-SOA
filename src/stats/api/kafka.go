@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,7 +44,7 @@ func initTopics() {
 	}
 }
 
-func ConsumeEvents() {
+func ConsumeEvents(db *sql.DB) {
 	initTopics()
 
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
@@ -79,12 +81,18 @@ func ConsumeEvents() {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				fmt.Printf("Message on %s: %s\n", e.TopicPartition, string(e.Value))
-				if e.Headers != nil {
-					fmt.Printf("Headers: %v\n", e.Headers)
+				switch *e.TopicPartition.Topic {
+				case "post-views":
+					HandleEvent(db, "views", string(e.Value))
+				case "post-likes":
+					HandleEvent(db, "likes", string(e.Value))
+				case "post-comments":
+					HandleEvent(db, "comments", string(e.Value))
+				default:
+					log.Printf("Got unknown topic: %v", *e.TopicPartition.Topic)
 				}
 			case kafka.Error:
-				fmt.Fprintf(os.Stderr, "Error: %v\n", e)
+				log.Printf("Error from kafka: %v", e)
 				if e.Code() == kafka.ErrAllBrokersDown {
 					run = false
 				}

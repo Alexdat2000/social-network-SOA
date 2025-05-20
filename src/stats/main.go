@@ -14,10 +14,13 @@ func main() {
 	port := flag.Int("port", 50052, "The server port")
 	flag.Parse()
 
+	db := api.InitClick()
 	s := grpc.NewServer()
-	pb.RegisterContentServer(s, &api.Server{})
+	pb.RegisterContentServer(s, &api.Server{
+		Click: db,
+	})
 
-	go api.ConsumeEvents()
+	go api.ConsumeEvents(db)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
