@@ -16,7 +16,7 @@ func main() {
 
 	db := api.InitClick()
 	s := grpc.NewServer()
-	pb.RegisterContentServer(s, &api.Server{
+	pb.RegisterStatsServer(s, &api.Server{
 		Click: db,
 	})
 

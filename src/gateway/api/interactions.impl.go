@@ -31,7 +31,7 @@ func (s Server) PostPostsPostIdLikes(w http.ResponseWriter, r *http.Request, pos
 		PostId: uint32(postId),
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -66,7 +66,7 @@ func (s Server) PostPostsPostIdComments(w http.ResponseWriter, r *http.Request, 
 		Text:   req.Text,
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -96,7 +96,7 @@ func (s Server) GetPostsPostIdComments(w http.ResponseWriter, r *http.Request, p
 		Page:   uint32(params.Page),
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

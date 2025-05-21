@@ -2,9 +2,9 @@ syntax = "proto3";
 
 option go_package = "soa/stats_grpc";
 
-package content_grpc;
+package stats_grpc;
 
-service Content {
+service Stats {
   rpc Stats(PostStatsRequest) returns (PostStats) {}
   rpc Daily(DailyRequest) returns (DailyStats) {}
   rpc TopPosts(TopRequest) returns (TopPostList) {}

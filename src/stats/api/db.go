@@ -19,5 +19,6 @@ func InitClick() *sql.DB {
 	if err := db.PingContext(ctx); err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Successfully connected to Click")
 	return db
 }

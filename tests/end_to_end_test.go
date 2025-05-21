@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,28 +13,44 @@ import (
 	"strings"
 	"testing"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/lib/pq"
 )
 
-func ClearTable(port int, dbname, tablename string) {
+func ClearTablePostgres(port int, dbname, tablename string) {
 	dsn := fmt.Sprintf("host=localhost port=%d user=postgres password=postgres dbname=%s sslmode=disable", port, dbname)
 
-	// Open database connection
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Verify connection is alive
 	if err := db.Ping(); err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	// Truncate the users table, reset identity, cascade to dependent tables
 	_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", tablename))
 	if err != nil {
 		log.Fatalf("failed to truncate users table: %v", err)
+	}
+}
+
+func ClearTableClick(tablename string) {
+	dsn := "clickhouse://default:clickhouse@localhost:9000/default"
+	db, err := sql.Open("clickhouse", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx := context.Background()
+	if err := db.PingContext(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.ExecContext(context.Background(), `ALTER TABLE `+tablename+` DELETE WHERE 1=1`)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -71,9 +88,9 @@ func TestUserService(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTable(5432, "users", "users")
-	ClearTable(5433, "content", "entries")
-	ClearTable(5433, "content", "comments")
+	ClearTablePostgres(5432, "users", "users")
+	ClearTablePostgres(5433, "content", "entries")
+	ClearTablePostgres(5433, "content", "comments")
 
 	// Trying logging into non-existent user: error
 	status, resp = SendRequest("/users/login", "POST", "", `{
@@ -141,9 +158,9 @@ func TestContentService(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTable(5432, "users", "users")
-	ClearTable(5433, "content", "entries")
-	ClearTable(5433, "content", "comments")
+	ClearTablePostgres(5432, "users", "users")
+	ClearTablePostgres(5433, "content", "entries")
+	ClearTablePostgres(5433, "content", "comments")
 
 	// Register 2 users
 	status, resp = SendRequest("/users", "POST", "", `{
@@ -260,9 +277,9 @@ func TestInteractions(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTable(5432, "users", "users")
-	ClearTable(5433, "content", "entries")
-	ClearTable(5433, "content", "comments")
+	ClearTablePostgres(5432, "users", "users")
+	ClearTablePostgres(5433, "content", "entries")
+	ClearTablePostgres(5433, "content", "comments")
 
 	// Register 2 users
 	status, resp = SendRequest("/users", "POST", "", `{
@@ -329,4 +346,93 @@ func TestInteractions(t *testing.T) {
 	assert.Equal(t, float64(2), result["comments"].([]interface{})[1].(map[string]interface{})["id"].(float64))
 	assert.Equal(t, "Alex2", result["comments"].([]interface{})[1].(map[string]interface{})["author"].(string))
 	assert.Equal(t, "Comment 2", result["comments"].([]interface{})[1].(map[string]interface{})["text"].(string))
+}
+
+func TestStatsService(t *testing.T) {
+	var status int
+	var resp string
+	var result map[string]interface{}
+	var resultList []map[string]interface{}
+	ClearTablePostgres(5432, "users", "users")
+	ClearTablePostgres(5433, "content", "entries")
+	ClearTablePostgres(5433, "content", "comments")
+	ClearTableClick("stats.views")
+	ClearTableClick("stats.likes")
+	ClearTableClick("stats.comments")
+
+	// Register 2 users
+	status, resp = SendRequest("/users", "POST", "", `{
+ "username": "Alex",
+ "password": "P@ssW0rd",
+ "email": "alex@example.com"
+}`)
+	jwt := resp[8 : len(resp)-2]
+
+	status, resp = SendRequest("/users", "POST", "", `{
+ "username": "Alex2",
+ "password": "P@ssW0rd",
+ "email": "alex2@example.com"
+}`)
+	jwt2 := resp[8 : len(resp)-2]
+
+	// Create posts
+	_, _ = SendRequest("/posts", "POST", jwt, `{
+ "title": "1",
+ "content": "1"
+}`)
+	_, _ = SendRequest("/posts", "POST", jwt2, `{
+ "title": "2",
+ "content": "2"
+}`)
+
+	// View post
+	status, resp = SendRequest("/posts/1", "GET", jwt, ``)
+
+	// Like posts
+	status, resp = SendRequest("/posts/1/likes", "POST", jwt, ``)
+	status, resp = SendRequest("/posts/2/likes", "POST", jwt, ``)
+	status, resp = SendRequest("/posts/2/likes", "POST", jwt2, ``)
+
+	// Comments on post
+	status, resp = SendRequest("/posts/1/comments", "POST", jwt, `{"text": "Comment 1"}`)
+	status, resp = SendRequest("/posts/1/comments", "POST", jwt2, `{"text": "Comment 2"}`)
+	status, resp = SendRequest("/posts/1/comments", "POST", jwt, `{"text": "Comment 3"}`)
+
+	// Get post stats
+	status, resp = SendRequest("/posts/1/stats", "GET", jwt, ``)
+	assert.Equal(t, 200, status)
+	_ = json.Unmarshal([]byte(resp), &result)
+	assert.Equal(t, float64(2), result["views"].(float64))
+	assert.Equal(t, float64(1), result["likes"].(float64))
+	assert.Equal(t, float64(3), result["comments"].(float64))
+
+	status, resp = SendRequest("/posts/2/stats", "GET", jwt, ``)
+	assert.Equal(t, 200, status)
+	_ = json.Unmarshal([]byte(resp), &result)
+	assert.Equal(t, float64(1), result["views"].(float64))
+	assert.Equal(t, float64(2), result["likes"].(float64))
+
+	// Get daily stats
+	status, resp = SendRequest("/posts/1/stats/daily?metric=comments", "GET", jwt, ``)
+	assert.Equal(t, 200, status)
+	_ = json.Unmarshal([]byte(resp), &resultList)
+	assert.Equal(t, float64(3), resultList[0]["count"].(float64))
+
+	// Get top posts
+	status, resp = SendRequest("/posts/top10?metric=views", "GET", jwt, ``)
+	assert.Equal(t, 200, status)
+	_ = json.Unmarshal([]byte(resp), &resultList)
+	assert.Equal(t, float64(1), resultList[0]["post_id"].(float64))
+	assert.Equal(t, float64(2), resultList[0]["count"].(float64))
+	assert.Equal(t, float64(2), resultList[1]["post_id"].(float64))
+	assert.Equal(t, float64(1), resultList[1]["count"].(float64))
+
+	// Get top users
+	status, resp = SendRequest("/users/top10?metric=likes", "GET", jwt, ``)
+	assert.Equal(t, 200, status)
+	_ = json.Unmarshal([]byte(resp), &resultList)
+	assert.Equal(t, "Alex2", resultList[0]["username"].(string))
+	assert.Equal(t, float64(2), resultList[0]["count"].(float64))
+	assert.Equal(t, "Alex", resultList[1]["username"].(string))
+	assert.Equal(t, float64(1), resultList[1]["count"].(float64))
 }

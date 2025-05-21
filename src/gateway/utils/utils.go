@@ -2,6 +2,8 @@ package utils
 
 import (
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"log"
 	"net/http"
 )
 
@@ -44,4 +46,15 @@ func GrpcCodeToHTTPStatus(code codes.Code) int {
 	default:
 		return http.StatusInternalServerError
 	}
+}
+
+func TranslateGrpcErrorToHttp(err error, w http.ResponseWriter) {
+	st, ok := status.FromError(err)
+	if !ok {
+		st = status.New(codes.Internal, err.Error())
+	}
+	if st.Code() == codes.Internal {
+		log.Printf("Error grpc: %v", err)
+	}
+	http.Error(w, st.Message(), GrpcCodeToHTTPStatus(st.Code()))
 }

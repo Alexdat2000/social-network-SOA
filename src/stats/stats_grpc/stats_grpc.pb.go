@@ -19,215 +19,215 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Content_Stats_FullMethodName    = "/content_grpc.Content/Stats"
-	Content_Daily_FullMethodName    = "/content_grpc.Content/Daily"
-	Content_TopPosts_FullMethodName = "/content_grpc.Content/TopPosts"
-	Content_TopUsers_FullMethodName = "/content_grpc.Content/TopUsers"
+	Stats_Stats_FullMethodName    = "/stats_grpc.Stats/Stats"
+	Stats_Daily_FullMethodName    = "/stats_grpc.Stats/Daily"
+	Stats_TopPosts_FullMethodName = "/stats_grpc.Stats/TopPosts"
+	Stats_TopUsers_FullMethodName = "/stats_grpc.Stats/TopUsers"
 )
 
-// ContentClient is the client API for Content service.
+// StatsClient is the client API for Stats service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ContentClient interface {
+type StatsClient interface {
 	Stats(ctx context.Context, in *PostStatsRequest, opts ...grpc.CallOption) (*PostStats, error)
 	Daily(ctx context.Context, in *DailyRequest, opts ...grpc.CallOption) (*DailyStats, error)
 	TopPosts(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopPostList, error)
 	TopUsers(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopUserList, error)
 }
 
-type contentClient struct {
+type statsClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewContentClient(cc grpc.ClientConnInterface) ContentClient {
-	return &contentClient{cc}
+func NewStatsClient(cc grpc.ClientConnInterface) StatsClient {
+	return &statsClient{cc}
 }
 
-func (c *contentClient) Stats(ctx context.Context, in *PostStatsRequest, opts ...grpc.CallOption) (*PostStats, error) {
+func (c *statsClient) Stats(ctx context.Context, in *PostStatsRequest, opts ...grpc.CallOption) (*PostStats, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostStats)
-	err := c.cc.Invoke(ctx, Content_Stats_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Stats_Stats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *contentClient) Daily(ctx context.Context, in *DailyRequest, opts ...grpc.CallOption) (*DailyStats, error) {
+func (c *statsClient) Daily(ctx context.Context, in *DailyRequest, opts ...grpc.CallOption) (*DailyStats, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DailyStats)
-	err := c.cc.Invoke(ctx, Content_Daily_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Stats_Daily_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *contentClient) TopPosts(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopPostList, error) {
+func (c *statsClient) TopPosts(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopPostList, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TopPostList)
-	err := c.cc.Invoke(ctx, Content_TopPosts_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Stats_TopPosts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *contentClient) TopUsers(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopUserList, error) {
+func (c *statsClient) TopUsers(ctx context.Context, in *TopRequest, opts ...grpc.CallOption) (*TopUserList, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TopUserList)
-	err := c.cc.Invoke(ctx, Content_TopUsers_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Stats_TopUsers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ContentServer is the server API for Content service.
-// All implementations must embed UnimplementedContentServer
+// StatsServer is the server API for Stats service.
+// All implementations must embed UnimplementedStatsServer
 // for forward compatibility.
-type ContentServer interface {
+type StatsServer interface {
 	Stats(context.Context, *PostStatsRequest) (*PostStats, error)
 	Daily(context.Context, *DailyRequest) (*DailyStats, error)
 	TopPosts(context.Context, *TopRequest) (*TopPostList, error)
 	TopUsers(context.Context, *TopRequest) (*TopUserList, error)
-	mustEmbedUnimplementedContentServer()
+	mustEmbedUnimplementedStatsServer()
 }
 
-// UnimplementedContentServer must be embedded to have
+// UnimplementedStatsServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedContentServer struct{}
+type UnimplementedStatsServer struct{}
 
-func (UnimplementedContentServer) Stats(context.Context, *PostStatsRequest) (*PostStats, error) {
+func (UnimplementedStatsServer) Stats(context.Context, *PostStatsRequest) (*PostStats, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
 }
-func (UnimplementedContentServer) Daily(context.Context, *DailyRequest) (*DailyStats, error) {
+func (UnimplementedStatsServer) Daily(context.Context, *DailyRequest) (*DailyStats, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Daily not implemented")
 }
-func (UnimplementedContentServer) TopPosts(context.Context, *TopRequest) (*TopPostList, error) {
+func (UnimplementedStatsServer) TopPosts(context.Context, *TopRequest) (*TopPostList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TopPosts not implemented")
 }
-func (UnimplementedContentServer) TopUsers(context.Context, *TopRequest) (*TopUserList, error) {
+func (UnimplementedStatsServer) TopUsers(context.Context, *TopRequest) (*TopUserList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TopUsers not implemented")
 }
-func (UnimplementedContentServer) mustEmbedUnimplementedContentServer() {}
-func (UnimplementedContentServer) testEmbeddedByValue()                 {}
+func (UnimplementedStatsServer) mustEmbedUnimplementedStatsServer() {}
+func (UnimplementedStatsServer) testEmbeddedByValue()               {}
 
-// UnsafeContentServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ContentServer will
+// UnsafeStatsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to StatsServer will
 // result in compilation errors.
-type UnsafeContentServer interface {
-	mustEmbedUnimplementedContentServer()
+type UnsafeStatsServer interface {
+	mustEmbedUnimplementedStatsServer()
 }
 
-func RegisterContentServer(s grpc.ServiceRegistrar, srv ContentServer) {
-	// If the following call pancis, it indicates UnimplementedContentServer was
+func RegisterStatsServer(s grpc.ServiceRegistrar, srv StatsServer) {
+	// If the following call pancis, it indicates UnimplementedStatsServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Content_ServiceDesc, srv)
+	s.RegisterService(&Stats_ServiceDesc, srv)
 }
 
-func _Content_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Stats_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostStatsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContentServer).Stats(ctx, in)
+		return srv.(StatsServer).Stats(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Content_Stats_FullMethodName,
+		FullMethod: Stats_Stats_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentServer).Stats(ctx, req.(*PostStatsRequest))
+		return srv.(StatsServer).Stats(ctx, req.(*PostStatsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Content_Daily_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Stats_Daily_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DailyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContentServer).Daily(ctx, in)
+		return srv.(StatsServer).Daily(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Content_Daily_FullMethodName,
+		FullMethod: Stats_Daily_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentServer).Daily(ctx, req.(*DailyRequest))
+		return srv.(StatsServer).Daily(ctx, req.(*DailyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Content_TopPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Stats_TopPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TopRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContentServer).TopPosts(ctx, in)
+		return srv.(StatsServer).TopPosts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Content_TopPosts_FullMethodName,
+		FullMethod: Stats_TopPosts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentServer).TopPosts(ctx, req.(*TopRequest))
+		return srv.(StatsServer).TopPosts(ctx, req.(*TopRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Content_TopUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Stats_TopUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TopRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContentServer).TopUsers(ctx, in)
+		return srv.(StatsServer).TopUsers(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Content_TopUsers_FullMethodName,
+		FullMethod: Stats_TopUsers_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentServer).TopUsers(ctx, req.(*TopRequest))
+		return srv.(StatsServer).TopUsers(ctx, req.(*TopRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Content_ServiceDesc is the grpc.ServiceDesc for Content service.
+// Stats_ServiceDesc is the grpc.ServiceDesc for Stats service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Content_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "content_grpc.Content",
-	HandlerType: (*ContentServer)(nil),
+var Stats_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "stats_grpc.Stats",
+	HandlerType: (*StatsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Stats",
-			Handler:    _Content_Stats_Handler,
+			Handler:    _Stats_Stats_Handler,
 		},
 		{
 			MethodName: "Daily",
-			Handler:    _Content_Daily_Handler,
+			Handler:    _Stats_Daily_Handler,
 		},
 		{
 			MethodName: "TopPosts",
-			Handler:    _Content_TopPosts_Handler,
+			Handler:    _Stats_TopPosts_Handler,
 		},
 		{
 			MethodName: "TopUsers",
-			Handler:    _Content_TopUsers_Handler,
+			Handler:    _Stats_TopUsers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

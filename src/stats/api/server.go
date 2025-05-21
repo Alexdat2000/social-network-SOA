@@ -6,6 +6,6 @@ import (
 )
 
 type Server struct {
-	pb.UnimplementedContentServer
+	pb.UnsafeStatsServer
 	Click *sql.DB
 }

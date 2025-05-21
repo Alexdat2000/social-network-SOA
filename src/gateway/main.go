@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 	"soa/gateway/api"
-	pb "soa/gateway/content_grpc"
+	"soa/gateway/content_grpc"
+	"soa/gateway/stats_grpc"
 )
 
 func main() {
 	server := api.Server{
-		ContentAPI: pb.InitContentClient("content:50051"),
+		ContentAPI: content_grpc.InitContentClient("content:50051"),
+		StatsAPI:   stats_grpc.InitStatsClient("stats:50052"),
 	}
 	r := chi.NewRouter()
 

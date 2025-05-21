@@ -135,7 +135,7 @@ services:
   stats:
     build:
       context: src/stats
-    command: [ "./content", "--port", "50051" ]
+    command: [ "./stats", "--port", "50052" ]
     restart: always
     depends_on:
       clickhouse_stats:

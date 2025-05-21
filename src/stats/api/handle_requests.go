@@ -13,11 +13,11 @@ import (
 func formatQuery(query string, metric pb.Metric) string {
 	switch metric {
 	case pb.Metric_VIEWS:
-		return strings.Replace(query, "table", "stats.views", 1)
+		return strings.Replace(query, "<table>", "stats.views", 1)
 	case pb.Metric_LIKES:
-		return strings.Replace(query, "table", "stats.likes", 1)
+		return strings.Replace(query, "<table>", "stats.likes", 1)
 	case pb.Metric_COMMENTS:
-		return strings.Replace(query, "table", "stats.comments", 1)
+		return strings.Replace(query, "<table>", "stats.comments", 1)
 	}
 	return ""
 }

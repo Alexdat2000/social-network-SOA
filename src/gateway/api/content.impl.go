@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"math"
 	"net/http"
@@ -12,17 +10,6 @@ import (
 	"soa/gateway/utils"
 	"time"
 )
-
-func translateGrpcErrorToHttp(err error, w http.ResponseWriter) {
-	st, ok := status.FromError(err)
-	if !ok {
-		st = status.New(codes.Internal, err.Error())
-	}
-	if st.Code() == codes.Internal {
-		log.Printf("Error grpc: %v", err)
-	}
-	http.Error(w, st.Message(), utils.GrpcCodeToHTTPStatus(st.Code()))
-}
 
 // Content
 
@@ -56,7 +43,7 @@ func (s Server) PostPosts(w http.ResponseWriter, r *http.Request) {
 
 	ans, err := s.ContentAPI.Post(ctx, &grpcReq)
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -84,7 +71,7 @@ func (s Server) GetPostsPostId(w http.ResponseWriter, r *http.Request, postId in
 		PostId: uint32(postId),
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -131,7 +118,7 @@ func (s Server) PutPostsPostId(w http.ResponseWriter, r *http.Request, postId in
 	defer cancel()
 	ans, err := s.ContentAPI.Put(ctx, &grpcReq)
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -159,7 +146,7 @@ func (s Server) DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId
 		PostId: uint32(postId),
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -187,7 +174,7 @@ func (s Server) GetPosts(w http.ResponseWriter, r *http.Request, params GetPosts
 		Page: uint32(params.Page),
 	})
 	if err != nil {
-		translateGrpcErrorToHttp(err, w)
+		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

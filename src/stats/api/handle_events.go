@@ -37,6 +37,6 @@ func HandleEvent(db *sql.DB, eventType, eventJson string) {
 	}
 	_, err = db.ExecContext(context.Background(), query, event.PostID, event.Author, date)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error writing to Click: %v", err)
 	}
 }
