@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"log"
 	"os"
 	"time"
@@ -37,7 +38,10 @@ func getDBConnectionString() string {
 func InitDB() *gorm.DB {
 	connStr := getDBConnectionString()
 
-	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{TranslateError: true})
+	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{
+		TranslateError: true,
+		Logger:         logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		log.Fatal("failed to connect database:", err)
 	}
