@@ -1,12 +1,12 @@
 package api
 
 import (
-	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"os"
-	"time"
 )
 
 func getDBConnectionString() string {
@@ -21,55 +21,20 @@ func getDBConnectionString() string {
 		host, port, user, password, dbname, sslmode)
 }
 
-var DB *sql.DB
-
-func connectToDB() {
+func InitDB() *gorm.DB {
 	connStr := getDBConnectionString()
-
-	maxRetries := 5
-	var err error
-	for i := 0; i < maxRetries; i++ {
-		DB, err = sql.Open("postgres", connStr)
-		if err != nil {
-			log.Printf("Failed to open DB connection: %v", err)
-			time.Sleep(time.Second * 3)
-			continue
-		}
-
-		err = DB.Ping()
-		if err == nil {
-			break
-		}
-
-		log.Printf("Failed to ping DB (attempt %d/%d): %v", i+1, maxRetries, err)
-		time.Sleep(time.Second * 3)
-	}
+	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{TranslateError: true})
 	if err != nil {
-		log.Fatalf("Failed to connect to the database after %d attempts: %v", maxRetries, err)
+		log.Fatal("failed to connect database:", err)
 	}
-}
+	if db == nil {
+		log.Fatal("No database connection")
+	}
 
-func createTables() {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS entries
-(
-    id              INT UNIQUE NOT NULL PRIMARY KEY,
-    title           TEXT NOT NULL,
-    description     TEXT NOT NULL,
-    author          VARCHAR(64) NOT NULL,
-    created_at      TIMESTAMP,
-    last_edited_at  TIMESTAMP,
-    is_private      boolean,
-    tags            TEXT
-);
-`)
+	err = db.AutoMigrate(&Entry{}, &Comment{})
 	if err != nil {
-		log.Fatalf("Failed to create table: %v", err)
+		log.Fatal("failed to auto migrate:", err)
 	}
-}
-
-func InitDB() {
-	connectToDB()
-	log.Println("Successfully connected to the database!")
-	createTables()
-	log.Println("Successfully set up tables!")
+	log.Printf("Successfully connected to the database")
+	return db
 }
