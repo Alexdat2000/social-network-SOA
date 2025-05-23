@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"moul.io/http2curl"
 	"net/http"
 	"strings"
 )
@@ -60,9 +59,8 @@ func SendRequest(url, method, jwt, body string) (int, string) {
 	if jwt != "" {
 		req.Header.Set("Authorization", "Bearer "+jwt)
 	}
-
-	command, _ := http2curl.GetCurlCommand(req)
-	fmt.Println(command)
+	//command, _ := http2curl.GetCurlCommand(req)
+	//fmt.Println(command)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
