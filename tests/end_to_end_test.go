@@ -13,9 +13,9 @@ func TestUserService(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTablePostgres(5432, "users", "users")
-	ClearTablePostgres(5433, "content", "entries")
-	ClearTablePostgres(5433, "content", "comments")
+	ClearTablePostgres("postgres_users", 5432, "users", "users")
+	ClearTablePostgres("postgres_content", 5433, "content", "entries")
+	ClearTablePostgres("postgres_content", 5433, "content", "comments")
 
 	// Trying logging into non-existent user: error
 	status, resp = SendRequest("/users/login", "POST", "", `{
@@ -83,9 +83,9 @@ func TestContentService(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTablePostgres(5432, "users", "users")
-	ClearTablePostgres(5433, "content", "entries")
-	ClearTablePostgres(5433, "content", "comments")
+	ClearTablePostgres("postgres_users", 5432, "users", "users")
+	ClearTablePostgres("postgres_content", 5433, "content", "entries")
+	ClearTablePostgres("postgres_content", 5433, "content", "comments")
 
 	// Register 2 users
 	status, resp = SendRequest("/users", "POST", "", `{
@@ -202,9 +202,9 @@ func TestInteractions(t *testing.T) {
 	var status int
 	var resp string
 	var result map[string]interface{}
-	ClearTablePostgres(5432, "users", "users")
-	ClearTablePostgres(5433, "content", "entries")
-	ClearTablePostgres(5433, "content", "comments")
+	ClearTablePostgres("postgres_users", 5432, "users", "users")
+	ClearTablePostgres("postgres_content", 5433, "content", "entries")
+	ClearTablePostgres("postgres_content", 5433, "content", "comments")
 
 	// Register 2 users
 	status, resp = SendRequest("/users", "POST", "", `{
@@ -278,9 +278,9 @@ func TestStatsService(t *testing.T) {
 	var resp string
 	var result map[string]interface{}
 	var resultList []map[string]interface{}
-	ClearTablePostgres(5432, "users", "users")
-	ClearTablePostgres(5433, "content", "entries")
-	ClearTablePostgres(5433, "content", "comments")
+	ClearTablePostgres("postgres_users", 5432, "users", "users")
+	ClearTablePostgres("postgres_content", 5433, "content", "entries")
+	ClearTablePostgres("postgres_content", 5433, "content", "comments")
 	ClearTableClick("stats.views")
 	ClearTableClick("stats.likes")
 	ClearTableClick("stats.comments")
@@ -362,11 +362,11 @@ func TestStatsService(t *testing.T) {
 	assert.Equal(t, float64(1), resultList[1]["count"].(float64))
 }
 
-func TestClean(t *testing.T) {
-	ClearTablePostgres(5432, "users", "users")
-	ClearTablePostgres(5433, "content", "entries")
-	ClearTablePostgres(5433, "content", "comments")
-	ClearTableClick("stats.views")
-	ClearTableClick("stats.likes")
-	ClearTableClick("stats.comments")
-}
+//func TestClean(t *testing.T) {
+//	ClearTablePostgres("postgres_users", 5432, "users", "users")
+//	ClearTablePostgres("postgres_content", 5433, "content", "entries")
+//	ClearTablePostgres("postgres_content", 5433, "content", "comments")
+//	ClearTableClick("stats.views")
+//	ClearTableClick("stats.likes")
+//	ClearTableClick("stats.comments")
+//}

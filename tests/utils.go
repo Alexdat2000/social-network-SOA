@@ -8,11 +8,22 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
-func ClearTablePostgres(port int, dbname, tablename string) {
-	dsn := fmt.Sprintf("host=localhost port=%d user=postgres password=postgres dbname=%s sslmode=disable", port, dbname)
+func isDocker() bool {
+	val, exists := os.LookupEnv("DOCKER_RUNTIME")
+	return exists && val == "1"
+}
+
+func ClearTablePostgres(host string, port int, dbname, tablename string) {
+	if !isDocker() {
+		host = "localhost"
+	} else {
+		port = 5432
+	}
+	dsn := fmt.Sprintf("host=%s port=%d user=postgres password=postgres dbname=%s sslmode=disable", host, port, dbname)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -31,7 +42,12 @@ func ClearTablePostgres(port int, dbname, tablename string) {
 }
 
 func ClearTableClick(tablename string) {
-	dsn := "clickhouse://default:clickhouse@localhost:9000/default"
+	var dsn string
+	if isDocker() {
+		dsn = "clickhouse://default:clickhouse@clickhouse_stats:9000/default"
+	} else {
+		dsn = "clickhouse://default:clickhouse@localhost:9000/default"
+	}
 	db, err := sql.Open("clickhouse", dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -49,7 +65,12 @@ func ClearTableClick(tablename string) {
 }
 
 func SendRequest(url, method, jwt, body string) (int, string) {
-	req, err := http.NewRequest(method, "http://localhost:8080"+url, bytes.NewBuffer([]byte(body)))
+	if isDocker() {
+		url = "http://gateway:8080" + url
+	} else {
+		url = "http://localhost:8080" + url
+	}
+	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
 	if err != nil {
 		log.Print(err.Error())
 		return -1, ""
