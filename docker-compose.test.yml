@@ -201,4 +201,4 @@ volumes:
 
 networks:
   test_network:
-    driver: host
+    driver: bridge
