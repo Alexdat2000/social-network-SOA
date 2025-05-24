@@ -1,7 +1,7 @@
 services:
   tests:
     build: tests
-    command: [ "go", "test", "-v", "./..." ]
+    command: [ "go", "test", "-v" ]
     environment:
       - DOCKER_RUNTIME=1
     depends_on:

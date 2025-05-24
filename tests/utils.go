@@ -1,4 +1,4 @@
-package tests
+package main
 
 import (
 	"bytes"
@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	_ "github.com/ClickHouse/clickhouse-go/v2"
+	_ "github.com/lib/pq"
 )
 
 func isDocker() bool {
@@ -17,7 +20,7 @@ func isDocker() bool {
 	return exists && val == "1"
 }
 
-func ClearTablePostgres(host string, port int, dbname, tablename string) {
+func getPostgresDb(host string, port int, dbname string) *sql.DB {
 	if !isDocker() {
 		host = "localhost"
 	} else {
@@ -29,19 +32,14 @@ func ClearTablePostgres(host string, port int, dbname, tablename string) {
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
-	defer db.Close()
 
 	if err := db.Ping(); err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-
-	_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", tablename))
-	if err != nil {
-		log.Fatalf("failed to truncate users table: %v", err)
-	}
+	return db
 }
 
-func ClearTableClick(tablename string) {
+func GetClickDb() *sql.DB {
 	var dsn string
 	if isDocker() {
 		dsn = "clickhouse://default:clickhouse@clickhouse_stats:9000/default"
@@ -57,19 +55,60 @@ func ClearTableClick(tablename string) {
 	if err := db.PingContext(ctx); err != nil {
 		log.Fatal(err)
 	}
+	return db
+}
 
-	_, err = db.ExecContext(context.Background(), `ALTER TABLE `+tablename+` DELETE WHERE 1=1`)
+func ClearTablePostgres(host string, port int, dbname, tablename string) {
+	db := getPostgresDb(host, port, dbname)
+	_, err := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", tablename))
+	if err != nil {
+		log.Fatalf("failed to truncate users table: %v", err)
+	}
+}
+
+func CalcRowsInTable(host string, port int, dbname, tablename string) int {
+	db := getPostgresDb(host, port, dbname)
+
+	var count int
+	row := db.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", tablename))
+	err := row.Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return count
+}
+
+func ClearTableClick(tablename string) {
+	db := GetClickDb()
+	_, err := db.ExecContext(context.Background(), `ALTER TABLE `+tablename+` DELETE WHERE 1=1`)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func SendRequest(url, method, jwt, body string) (int, string) {
-	if isDocker() {
-		url = "http://gateway:8080" + url
-	} else {
-		url = "http://localhost:8080" + url
+func ExecuteInClick(reqs []string) {
+	db := GetClickDb()
+	for _, req := range reqs {
+		_, err := db.ExecContext(context.Background(), req)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+}
+
+func CalcRowsInClick(tablename string) int {
+	db := GetClickDb()
+
+	var count int
+	row := db.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", tablename))
+	err := row.Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return count
+}
+
+func SendRequestWithUrl(url, method, jwt, body string) (int, string) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
 	if err != nil {
 		log.Print(err.Error())
@@ -99,4 +138,13 @@ func SendRequest(url, method, jwt, body string) (int, string) {
 	}
 
 	return resp.StatusCode, strings.TrimSpace(string(respBody))
+}
+
+func SendRequest(url, method, jwt, body string) (int, string) {
+	if isDocker() {
+		url = "http://gateway:8080" + url
+	} else {
+		url = "http://localhost:8080" + url
+	}
+	return SendRequestWithUrl(url, method, jwt, body)
 }

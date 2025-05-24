@@ -65,6 +65,9 @@ func (s *Server) Post(ctx context.Context, req *pb.PostRequest) (*pb.PostInfo, e
 }
 
 func (s *Server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PostInfo, error) {
+	if req.Tags == nil {
+		req.Tags = []string{}
+	}
 	updates := map[string]interface{}{
 		"title":          req.GetTitle(),
 		"description":    req.GetDescription(),

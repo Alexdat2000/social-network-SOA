@@ -1,9 +1,10 @@
-FROM golang:1.24-alpine
+FROM golang:1.24-bullseye
+
+RUN apt-get update && apt-get install -y gcc librdkafka-dev git
 
 WORKDIR /tests
-COPY go.mod go.sum ./
+COPY go.* .
 RUN go mod download
-
 COPY . .
 
-CMD ["go", "test", "-v", "./..."]
+CMD ["go", "test", "-v"]
