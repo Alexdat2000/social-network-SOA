@@ -19,5 +19,4 @@ jobs:
         with:
           file: docker-compose.test.yml
           service: tests
-          command: go test -v
           registry: docker.io
