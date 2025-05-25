@@ -14,9 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Compose
+        run: docker compose -f docker-compose.test.yml build
+
       - name: Run tests
-        uses: cloudposse/github-action-docker-compose-test-run@main
-        with:
-          file: docker-compose.test.yml
-          service: tests
-          registry: docker.io
+        run: docker compose -f docker-compose.test.yml run --rm tests
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.test.yml down

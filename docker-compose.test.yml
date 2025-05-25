@@ -1,25 +1,204 @@
-name: Go test
-
-on:
-  push:
-    branches:
-      - main
-      - hw6
-
-jobs:
+services:
   tests:
-    runs-on: ubuntu-latest
+    build: tests
+    command: [ "go", "test", "-v" ]
+    environment:
+      - DOCKER_RUNTIME=1
+    depends_on:
+      - gateway
+    networks:
+      - test_network
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  gateway:
+    build:
+      context: src/gateway
+      target: runtime
+    command: [ "--listen", ":8080", "--users", "http://users:8080", "--content", "content:50051" ]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - users
+      - content
+      - stats
+    networks:
+      - test_network
 
-      - name: Set up Docker Compose
-        run: docker compose -f docker-compose.test.yml build
+  # User service
+  users:
+    build:
+      context: src/users
+      target: runtime
+    volumes:
+      - ./credentials/private.pem:/tmp/private.pem
+      - ./credentials/public.pem:/tmp/public.pem
+    ports:
+      - "8081:8080"
+    restart: always
+    env_file:
+      - common.env
+    environment:
+      DB_HOST: postgres_users
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-users}
+    depends_on:
+      postgres_users:
+        condition: service_healthy
+    networks:
+      - test_network
 
-      - name: Run tests
-        run: docker compose -f docker-compose.test.yml run --rm tests
+  postgres_users:
+    image: postgres:15-alpine
+    container_name: postgres_users
+    restart: always
+    env_file:
+      - common.env
+    environment:
+      POSTGRES_DB: ${DB_NAME:-users}
+      PGDATA: /var/lib/postgresql/data/pgdata_users_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_users_test:/var/lib/postgresql/data
+      - ./src/users/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d users" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test_network
 
-      - name: Tear down
-        if: always()
-        run: docker compose -f docker-compose.test.yml down
+
+  # Content service
+  content:
+    build:
+      context: src/content
+    command: [ "./content", "--port", "50051" ]
+    restart: always
+    env_file:
+      - common.env
+    environment:
+      DB_HOST: postgres_content
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-content}
+    depends_on:
+      postgres_content:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - test_network
+
+  postgres_content:
+    image: postgres:15-alpine
+    container_name: postgres_content
+    restart: always
+    env_file:
+      - common.env
+    environment:
+      POSTGRES_DB: ${DB_NAME:-content}
+      PGDATA: /var/lib/postgresql/data/pgdata_content_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_content_test:/var/lib/postgresql/data
+      - ./src/content/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d content" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test_network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - test_network
+
+  kafka:
+    image: confluentinc/cp-server:7.2.1
+    hostname: kafka
+    container_name: kafka
+    restart: on-failure
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9997:9997"
+    env_file:
+      - kafka.env
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "9092" ]
+      interval: 5s
+      timeout: 1s
+      retries: 10
+      start_period: 5s
+    networks:
+      - test_network
+
+  #  kafka-ui:
+  #    container_name: kafka-ui
+  #    image: provectuslabs/kafka-ui:latest
+  #    ports:
+  #      - 8082:8080
+  #    environment:
+  #      DYNAMIC_CONFIG_ENABLED: true
+  #      KAFKA_CLUSTERS_0_NAME: local
+  #      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #      LOG_LEVEL: error
+
+  # Stats service
+  stats:
+    build:
+      context: src/stats
+    command: [ "./stats", "--port", "50052" ]
+    restart: always
+    depends_on:
+      clickhouse_stats:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - test_network
+
+  clickhouse_stats:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_PASSWORD=clickhouse
+    volumes:
+      - ./src/stats/clickhouse-config/users.xml:/etc/clickhouse-server/users.xml:ro
+      - ./src/stats/clickhouse-config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - clickhouse_data_stats_test:/var/lib/clickhouse
+    healthcheck:
+      test: [ "CMD-SHELL", "clickhouse-client --query='SELECT 1'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 100
+      start_period: 10s
+    networks:
+      - test_network
+
+
+volumes:
+  pgdata_content_test:
+    driver: local
+  pgdata_users_test:
+    driver: local
+  clickhouse_data_stats_test:
+    driver: local
+
+networks:
+  test_network:
+    driver: bridge
