@@ -1,0 +1,23 @@
+name: Go test
+
+on:
+  push:
+    branches:
+      - main
+      - hw6
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        uses: cloudposse/github-action-docker-compose-test-run@main
+        with:
+          file: docker-compose.test.yml
+          service: tests
+          command: go test -v
+          registry: docker.io
