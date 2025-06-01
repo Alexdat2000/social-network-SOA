@@ -141,7 +141,7 @@ func (s Server) DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	ans, err := s.ContentAPI.Delete(ctx, &pb.UserPostRequest{
+	_, err := s.ContentAPI.Delete(ctx, &pb.UserPostRequest{
 		User:   username,
 		PostId: uint32(postId),
 	})
@@ -149,11 +149,7 @@ func (s Server) DeletePostsPostId(w http.ResponseWriter, r *http.Request, postId
 		utils.TranslateGrpcErrorToHttp(err, w)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
-	if err := json.NewEncoder(w).Encode(ans); err != nil {
-		log.Printf("Error encoding response: %v", err)
-	}
 }
 
 func (s Server) GetPosts(w http.ResponseWriter, r *http.Request, params GetPostsParams) {
