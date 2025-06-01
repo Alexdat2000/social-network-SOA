@@ -10,22 +10,20 @@ import (
 	pb "soa/content/content_grpc"
 )
 
-type server struct {
-	pb.UnimplementedContentServer
-}
-
 func main() {
-	api.InitDB()
-	api.ConnectToKafka()
-
 	port := flag.Int("port", 50051, "The server port")
 	flag.Parse()
+
+	s := grpc.NewServer()
+	pb.RegisterContentServer(s, &api.Server{
+		DB:    api.InitDB(),
+		Kafka: api.InitKafka(),
+	})
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterContentServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

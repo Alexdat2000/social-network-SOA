@@ -2,7 +2,7 @@ package tests
 
 import (
 	"github.com/stretchr/testify/assert"
-	api "soa/users/go"
+	"soa/users/api"
 	"strings"
 	"testing"
 )
@@ -20,23 +20,17 @@ func TestJWTToken(t *testing.T) {
 }
 
 func TestPasswordStrengthChecker(t *testing.T) {
-	strong, errMsg := api.CheckPasswordStrength("a")
-	assert.Equal(t, false, strong)
+	errMsg := api.CheckPasswordStrength("a")
 	assert.Equal(t, "Password must be at least 8 characters", errMsg)
-	strong, errMsg = api.CheckPasswordStrength(strings.Repeat("a", 33))
-	assert.Equal(t, false, strong)
+	errMsg = api.CheckPasswordStrength(strings.Repeat("a", 33))
 	assert.Equal(t, "Password must be less than 32 characters", errMsg)
-	strong, errMsg = api.CheckPasswordStrength("aAaA@@@@")
-	assert.Equal(t, false, strong)
+	errMsg = api.CheckPasswordStrength("aAaA@@@@")
 	assert.Equal(t, "Password must contain at least 1 digit", errMsg)
-	strong, errMsg = api.CheckPasswordStrength("ab1b@@@@")
-	assert.Equal(t, false, strong)
+	errMsg = api.CheckPasswordStrength("ab1b@@@@")
 	assert.Equal(t, "Password must contain at least 1 uppercase letter", errMsg)
-	strong, errMsg = api.CheckPasswordStrength("aAaAbBbB1")
-	assert.Equal(t, false, strong)
+	errMsg = api.CheckPasswordStrength("aAaAbBbB1")
 	assert.Equal(t, "Password must contain at least 1 special character", errMsg)
-	strong, errMsg = api.CheckPasswordStrength("aAaAbBb@1")
-	assert.Equal(t, true, strong)
+	errMsg = api.CheckPasswordStrength("aAaAbBb@1")
 	assert.Equal(t, "", errMsg)
 }
 

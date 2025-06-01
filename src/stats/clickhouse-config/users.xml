@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <users>
+        <default>
+            <password>clickhouse</password>
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </default>
+        <user_name>
+            <password>clickhouse</password>
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+            <databases>
+                <database>stats</database>
+            </databases>
+        </user_name>
+    </users>
+    <profiles>
+        <default>
+            <max_memory_usage>10000000000</max_memory_usage>
+        </default>
+    </profiles>
+    <quotas>
+        <default>
+            <interval>
+                <duration>3600</duration>
+                <queries>1000</queries>
+                <errors>10</errors>
+                <result_rows>1000000</result_rows>
+                <read_rows>10000000</read_rows>
+                <execution_time>3600</execution_time>
+            </interval>
+        </default>
+    </quotas>
+    <networks>
+        <networks>
+            <ip>::/0</ip>
+        </networks>
+    </networks>
+</clickhouse>

@@ -1,0 +1,265 @@
+openapi: 3.0.3
+info:
+  title: Social Network - User Service
+  description: |-
+    This is a User service of Social Network project
+  version: 0.3.0
+tags:
+  - name: users
+    description: User registration, authentication and profile information
+
+security:
+  - bearerAuth: []
+
+paths:
+  /users/login:
+    post:
+      summary: Get JWT token for user
+      description: Login into account with login and password and get a JWT token for that user
+      tags:
+        - users
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: Alex
+                password:
+                  type: string
+                  example: P@ssW0rd
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                properties:
+                  jwt:
+                    type: string
+                    description: JWT for registered user
+                    example: example.jwt.token
+                required:
+                  - jwt
+        '400':
+          description: Invalid request
+        '401':
+          description: Incorrect credentials
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /users:
+    post:
+      summary: Register new user
+      description: Make a new user with given email, username and password
+      tags:
+        - users
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: alex@example.com
+                username:
+                  type: string
+                  example: Alex
+                password:
+                  type: string
+                  example: P@ssW0rd
+              required:
+                - email
+                - username
+                - password
+      responses:
+        '201':
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                    description: JWT for registered user
+                    example: example.jwt.token
+                required:
+                  - jwt
+        '400':
+          description: Invalid username, password or email supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: User already exists
+        '500':
+          description: Internal server error
+
+    patch:
+      summary: Update user information
+      description: Update fields in user profile. Empty field means no change
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Updated email
+                  format: email
+                  example: alex@example.com
+                firstName:
+                  type: string
+                  description: Updated first name
+                  example: Alex
+                lastName:
+                  type: string
+                  description: Updated last name
+                  example: Dat
+                dateOfBirth:
+                  type: string
+                  format: date
+                  description: Updated date of birth
+                  example: 1970-12-31
+                phoneNumber:
+                  type: string
+                  description: Updated phone number
+                  example: 800-555-0100
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Unsuccessful operation, one of new values is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Authentication has failed
+        '500':
+          description: Internal server error
+
+  /users/{username}:
+    get:
+      summary: Get user information
+      description: Get all fields for user
+      tags:
+        - users
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+            example: Alex
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Invalid request
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /users/auth:
+    get:
+      summary: Get user information
+      description: Get all fields for user
+      tags:
+        - users
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: Alex
+        '400':
+          description: Invalid request
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme. Enter 'Bearer [token]'
+
+  schemas:
+    Profile:
+      type: object
+      properties:
+        username:
+          type: string
+          example: Alex
+        email:
+          type: string
+          format: email
+          example: alex@example.com
+        firstName:
+          type: string
+          example: Alex
+        lastName:
+          type: string
+          example: Dat
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1970-12-31
+        phoneNumber:
+          type: string
+          example: 800-555-0100
+        createdAt:
+          type: integer
+          example: 1740945570
+        lastEditedAt:
+          type: integer
+          example: 1740945570
+      required:
+        - username
+        - email
+
+    ErrorMessage:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Example error message
+      required:
+        - error
