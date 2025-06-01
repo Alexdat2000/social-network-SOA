@@ -1,5 +1,7 @@
-# Социальная сеть
+# Social network backend
 
-Домашние задания по курсу "Сервис-ориентированные архитектуры"
+Project with microservices.
 
-Дацковский Алексей Сергеевич, БПМИ-226
+Supports posts, interactions and statistics.
+
+OpenAPI specification: [https://alexdat2000.github.io/social-network-SOA/](https://alexdat2000.github.io/social-network-SOA/)
